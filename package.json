@@ -1,0 +1,33 @@
+{
+  "name": "gong-call-summary-agent",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "@ai-sdk/anthropic": "beta",
+    "@ai-sdk/openai": "beta",
+    "@slack/web-api": "^7.13.0",
+    "@vercel/sandbox": "^1.0.4",
+    "ai": "beta",
+    "jose": "^5.0.0",
+    "ms": "^2.1.3",
+    "next": "16.0.10",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "slugify": "^1.6.6",
+    "workflow": "4.0.1-beta.24",
+    "zod": "^4.1.12"
+  },
+  "devDependencies": {
+    "@types/ms": "^2.1.0",
+    "@types/node": "^20.0.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "typescript": "^5.0.0"
+  }
+}
