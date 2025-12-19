@@ -1,14 +1,10 @@
 /**
  * Landing Page - Gong Call Summary Agent
  *
- * Minimalist status page showing configuration and integration status.
+ * Minimalist landing page for the Gong Call Summary Agent.
  */
 
-import { validateConfig, config } from '@/lib/config';
-
 export default function HomePage() {
-  const configStatus = validateConfig();
-
   return (
     <main
       style={{
@@ -64,6 +60,33 @@ export default function HomePage() {
         </a>
       </p>
 
+      {/* Integrations */}
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'center',
+          gap: '24px',
+          marginBottom: '16px',
+        }}
+      >
+        <IntegrationBadge name="Gong" />
+        <IntegrationBadge name="Slack" />
+        <IntegrationBadge name="Salesforce" />
+      </div>
+
+      {/* Alternative Text */}
+      <p
+        style={{
+          fontSize: '0.9rem',
+          color: '#888',
+          margin: 0,
+          marginBottom: '48px',
+          textAlign: 'center',
+        }}
+      >
+        Or alternative integrations
+      </p>
+
       {/* Status Card */}
       <div
         style={{
@@ -76,65 +99,6 @@ export default function HomePage() {
           boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
         }}
       >
-        {/* Configuration Status */}
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '10px',
-            marginBottom: '20px',
-            paddingBottom: '20px',
-            borderBottom: '1px solid #f0f0f0',
-          }}
-        >
-          <span
-            style={{
-              width: '20px',
-              height: '20px',
-              borderRadius: '50%',
-              backgroundColor: configStatus.valid ? '#22c55e' : '#ef4444',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: '12px',
-              color: '#fff',
-            }}
-          >
-            {configStatus.valid ? '✓' : '✕'}
-          </span>
-          <span style={{ fontSize: '0.95rem', color: '#333' }}>
-            {configStatus.valid
-              ? 'Configuration valid'
-              : `Configuration error: ${configStatus.errors.join(', ')}`}
-          </span>
-        </div>
-
-        {/* Integrations */}
-        <div
-          style={{
-            display: 'flex',
-            gap: '24px',
-            marginBottom: '20px',
-            paddingBottom: '20px',
-            borderBottom: '1px solid #f0f0f0',
-          }}
-        >
-          <IntegrationBadge
-            name="Gong"
-            enabled={!!config.gong.accessKey}
-          />
-          <IntegrationBadge
-            name="Slack"
-            enabled={config.slack.enabled}
-            optional
-          />
-          <IntegrationBadge
-            name="Salesforce"
-            enabled={config.salesforce.enabled}
-            optional
-          />
-        </div>
-
         {/* Webhook Endpoint */}
         <div>
           <div
@@ -174,7 +138,7 @@ export default function HomePage() {
         }}
       >
         <a
-          href="https://github.com/vercel/ai"
+          href="https://github.com/vercel-labs/call-summary-agent-with-sandbox"
           target="_blank"
           rel="noopener noreferrer"
           style={{ color: '#888', textDecoration: 'none' }}
@@ -182,7 +146,7 @@ export default function HomePage() {
           GitHub
         </a>
         <a
-          href="https://sdk.vercel.ai/docs"
+          href="https://github.com/vercel-labs/call-summary-agent-with-sandbox/tree/main?tab=readme-ov-file#gong-call-summary-agent"
           target="_blank"
           rel="noopener noreferrer"
           style={{ color: '#888', textDecoration: 'none' }}
@@ -196,24 +160,10 @@ export default function HomePage() {
 
 function IntegrationBadge({
   name,
-  enabled,
-  optional = false,
 }: {
   name: string;
-  enabled: boolean;
-  optional?: boolean;
 }) {
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-      <span
-        style={{
-          width: '8px',
-          height: '8px',
-          borderRadius: '50%',
-          backgroundColor: enabled ? '#22c55e' : optional ? '#d4d4d4' : '#ef4444',
-        }}
-      />
-      <span style={{ fontSize: '0.9rem', color: '#555' }}>{name}</span>
-    </div>
+    <span style={{ fontSize: '0.9rem', color: '#555' }}>{name}</span>
   );
 }
