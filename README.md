@@ -1,7 +1,5 @@
 # Sales Call Summary Agent
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fvercel-labs%2Fcoding-agent-template&env=GONG_ACCESS_KEY,GONG_SECRET_KEY,ANTHROPIC_API_KEY&envDescription=Required%20API%20keys%20for%20Gong%20and%20AI%20model&project-name=gong-call-summary-agent)
-
 An AI-powered agent that automatically summarizes sales calls using Vercel's Sandbox architecture. The agent analyzes call transcripts and generates structured summaries with objections, action items, and insights.
 
 > **Template Note**: This template uses **Gong** as a starting example for call transcript integration. You can adapt it to work with other call recording platforms (Zoom, Google Meet, etc.) by modifying the webhook handler and transcript fetching logic.
@@ -11,11 +9,102 @@ An AI-powered agent that automatically summarizes sales calls using Vercel's San
 - **Structured Summaries** - AI-generated summaries with tasks, objections, and key insights
 - **Sandbox Agent** - Uses Vercel Sandbox for secure code execution and file exploration
 - **[bash-tool](https://www.npmjs.com/package/bash-tool)** - Generic bash tool for AI agents, compatible with AI SDK
-- **Demo Mode** - Test the full agent flow with mock data, no API keys required
+- **Demo Mode** - Works out of the box with mock data (no Gong credentials needed)
 - **Objection Tracking** - Identifies and scores how well objections were handled
 - **Slack Integration** - Optional notifications to your team channel
 - **Salesforce Integration** - Optional CRM context enrichment
 - **Durable Workflows** - Built with Vercel Workflow DevKit for reliability
+
+---
+
+## One-Click Deploy (Demo Mode)
+
+Deploy to Vercel and try it immediately with demo data:
+
+[![Deploy with Vercel]()
+
+**You only need one thing:** `AI_GATEWAY_API_KEY`
+
+Get it from your [Vercel AI Gateway settings](https://vercel.com/docs/ai-gateway).
+
+> Demo mode is **enabled by default** - no Gong credentials required to test!
+
+---
+
+## Local Development (Demo Mode)
+
+### 1. Clone and Install
+
+```bash
+git clone https://github.com/vercel-labs/call-summary-agent
+cd call-summary-agent
+npm install
+```
+
+### 2. Link to Vercel (creates .env.local automatically)
+
+```bash
+vercel link
+vercel env pull
+```
+
+Or manually create `.env.local`:
+
+```bash
+AI_GATEWAY_API_KEY=your_ai_gateway_api_key
+```
+
+### 3. Run
+
+```bash
+npm run dev
+```
+
+### 4. Test
+
+```bash
+# Check status (should show demoMode: true)
+curl http://localhost:3000/api/gong-webhook
+
+# Trigger the agent with demo data
+curl -X POST http://localhost:3000/api/gong-webhook \
+  -H "Content-Type: application/json" \
+  -d '{}'
+```
+
+---
+
+## Production Setup (Real Gong Data)
+
+To use real Gong API data instead of demo data:
+
+### 1. Set Environment Variables
+
+Add these to your Vercel project settings or `.env.local`:
+
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `AI_GATEWAY_API_KEY` | Yes | [Vercel AI Gateway](https://vercel.com/docs/ai-gateway) API key |
+| `USE_REAL_DATA` | Yes | Set to `true` to disable demo mode |
+| `GONG_ACCESS_KEY` | Yes | Your Gong API access key |
+| `GONG_SECRET_KEY` | Yes | Your Gong API secret key |
+
+```bash
+AI_GATEWAY_API_KEY=your_ai_gateway_api_key
+USE_REAL_DATA=true
+GONG_ACCESS_KEY=your_gong_access_key
+GONG_SECRET_KEY=your_gong_secret_key
+```
+
+### 2. Configure Gong Webhook
+
+1. Go to your Gong settings > Integrations > Webhooks
+2. Create a new webhook with:
+   - **URL**: `https://your-app.vercel.app/api/gong-webhook`
+   - **Events**: Select "Call completed"
+3. Save and test the webhook
+
+---
 
 ## Architecture
 
@@ -55,109 +144,47 @@ flowchart TD
     Steps --> Slack
 ```
 
-## Quick Start
+## Environment Variables
 
-### 1. Deploy to Vercel
+| Variable | Required | Default | Description |
+|----------|----------|---------|-------------|
+| `AI_GATEWAY_API_KEY` | Yes | - | Vercel AI Gateway API key |
+| `USE_REAL_DATA` | No | `false` | Set to `true` for production Gong API |
+| `GONG_ACCESS_KEY` | When `USE_REAL_DATA=true` | - | Gong API access key |
+| `GONG_SECRET_KEY` | When `USE_REAL_DATA=true` | - | Gong API secret key |
+| `COMPANY_NAME` | No | "Your Company" | Company name in prompts |
+| `AI_MODEL` | No | `anthropic/claude-sonnet-4` | AI model to use |
+| `SLACK_BOT_TOKEN` | No | - | Slack bot token for notifications |
+| `SLACK_CHANNEL_ID` | No | - | Slack channel ID for summaries |
+| `SF_CLIENT_ID` | No | - | Salesforce Connected App client ID |
+| `SF_USERNAME` | No | - | Salesforce username |
+| `SF_LOGIN_URL` | No | `https://login.salesforce.com` | Salesforce login URL |
+| `SF_PRIVATE_KEY_PEM` | No | - | Salesforce private key (PEM format) |
 
-Click the "Deploy with Vercel" button above, or:
+## Demo Mode Details
 
-```bash
-git clone https://github.com/your-org/gong-call-summary-agent
-cd gong-call-summary-agent
-vercel
+Demo mode uses realistic mock data including a sample 20-minute product demo call. The demo files are organized in the `/demo-files` folder:
+
+```
+demo-files/
+├── webhook-data.json              # Mock Gong webhook payload
+├── transcript.json                # 20-minute call transcript
+└── context/
+    ├── gong-calls/previous/       # Historical calls
+    │   ├── demo-call-000-discovery-call.md
+    │   └── demo-call-intro-initial-call.md
+    ├── salesforce/                # CRM context
+    │   ├── account.md
+    │   ├── opportunity.md
+    │   └── contacts.md
+    ├── research/                  # Background info
+    │   ├── company-research.md
+    │   └── competitive-intel.md
+    └── playbooks/
+        └── sales-playbook.md
 ```
 
-### 2. Configure Environment Variables
-
-Set the following environment variables in your Vercel project:
-
-#### Required
-
-| Variable | Description |
-|----------|-------------|
-| `ANTHROPIC_API_KEY` | Anthropic API key (or use `OPENAI_API_KEY` instead) |
-
-#### Required for Production (skip for Demo Mode)
-
-| Variable | Description |
-|----------|-------------|
-| `GONG_ACCESS_KEY` | Your Gong API access key |
-| `GONG_SECRET_KEY` | Your Gong API secret key |
-
-#### Optional
-
-| Variable | Description |
-|----------|-------------|
-| `DEMO_MODE` | Set to `true` to use mock data instead of real Gong API |
-| `COMPANY_NAME` | Your company name (default: "Your Company") |
-| `AI_MODEL` | AI model to use (default: `anthropic/claude-sonnet-4-20250514`) |
-| `SLACK_BOT_TOKEN` | Slack bot token for notifications |
-| `SLACK_CHANNEL_ID` | Slack channel ID for summaries |
-| `SF_CLIENT_ID` | Salesforce Connected App client ID |
-| `SF_USERNAME` | Salesforce username |
-| `SF_LOGIN_URL` | Salesforce login URL |
-| `SF_PRIVATE_KEY_PEM` | Salesforce private key (PEM format) |
-
-### 3. Configure Gong Webhook (Production Mode)
-
-1. Go to your Gong settings > Integrations > Webhooks
-2. Create a new webhook with:
-   - **URL**: `https://your-app.vercel.app/api/gong-webhook`
-   - **Events**: Select "Call completed"
-3. Save and test the webhook
-
-## Demo Mode
-
-Demo mode allows you to test the full agent workflow without Gong API credentials. It uses realistic mock data including:
-
-- A sample product demo call transcript
-- Historical call transcripts (discovery call, intro call)
-- Salesforce records (account, opportunity, contacts)
-- Company research and competitive intelligence
-- Sales playbook
-
-### Enable Demo Mode
-
-Set the environment variable:
-
-```bash
-DEMO_MODE=true
-```
-
-### Test Demo Mode
-
-1. **Check configuration:**
-   ```bash
-   curl https://your-app.vercel.app/api/gong-webhook
-   ```
-   Response should include `"demoMode": true`
-
-2. **Trigger the webhook:**
-   ```bash
-   curl -X POST https://your-app.vercel.app/api/gong-webhook \
-     -H "Content-Type: application/json" \
-     -d '{}'
-   ```
-   The empty body is fine - mock data is used automatically in demo mode.
-
-3. **View logs** in the Vercel dashboard to see the agent processing the call.
-
-### Demo Mode Files
-
-In demo mode, the sandbox is populated with 10 context files:
-
-| Path | Description |
-|------|-------------|
-| `gong-calls/demo-call-001-*.md` | Current call transcript |
-| `gong-calls/metadata.json` | Call metadata |
-| `gong-calls/previous/demo-call-000-discovery-call.md` | Previous discovery call |
-| `gong-calls/previous/demo-call-intro-initial-call.md` | Initial intro call |
-| `salesforce/account.md` | Salesforce account record |
-| `salesforce/opportunity.md` | Salesforce opportunity |
-| `salesforce/contacts.md` | Salesforce contacts |
-| `research/company-research.md` | Company background |
-| `research/competitive-intel.md` | Competitive analysis |
-| `playbooks/sales-playbook.md` | Sales playbook |
+These files are loaded into the sandbox for the agent to explore.
 
 ## Configuration
 
@@ -166,7 +193,7 @@ In demo mode, the sandbox is populated with 10 context files:
 By default, the agent uses `claude-sonnet-4-20250514`. You can change this via:
 
 ```bash
-AI_MODEL=anthropic/claude-opus-4-20250514
+AI_MODEL=anthropic/claude-sonnet-4
 # or
 AI_MODEL=openai/gpt-4o
 ```
@@ -351,11 +378,15 @@ sales-call-summary-agent/
 │   ├── api/gong-webhook/    # Webhook endpoint
 │   ├── layout.tsx
 │   └── page.tsx             # Status page
+├── demo-files/              # Demo mode files
+│   ├── webhook-data.json
+│   ├── transcript.json
+│   └── context/             # Additional context files
 ├── lib/
 │   ├── agent.ts             # ToolLoopAgent configuration
 │   ├── config.ts            # Centralized configuration
 │   ├── gong-client.ts       # Gong API helpers
-│   ├── mock-data.ts         # Demo mode mock data
+│   ├── mock-data.ts         # Demo mode loader
 │   ├── salesforce.ts        # Optional Salesforce integration
 │   ├── slack.ts             # Optional Slack integration
 │   ├── sandbox-context.ts   # File generation for sandbox
@@ -393,7 +424,7 @@ Health check endpoint.
 {
   "status": "ok",
   "service": "sales-call-summary-agent",
-  "demoMode": false,
+  "demoMode": true,
   "configValid": true,
   "configErrors": []
 }

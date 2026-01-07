@@ -96,7 +96,7 @@ export const config = {
   companyName: process.env.COMPANY_NAME || 'Your Company',
 
   // AI Model configuration
-  model: process.env.AI_MODEL || 'anthropic/claude-sonnet-4-20250514',
+  model: process.env.AI_MODEL || 'anthropic/claude-sonnet-4',
   systemPrompt: process.env.AGENT_SYSTEM_PROMPT || DEFAULT_SYSTEM_PROMPT,
 
   // Gong API configuration
@@ -130,9 +130,10 @@ export const config = {
   playbooks: [] as Playbook[],
 
   // Demo mode configuration
-  // When enabled, uses mock Gong data instead of real API calls
+  // By default, demo mode is enabled (uses mock data)
+  // Set USE_REAL_DATA=true to use real Gong API calls
   demo: {
-    enabled: process.env.DEMO_MODE === 'true',
+    enabled: process.env.USE_REAL_DATA !== 'true',
   },
 
   // Sandbox configuration
@@ -158,8 +159,8 @@ export function validateConfig(): { valid: boolean; errors: string[] } {
     }
   }
 
-  if (!process.env.ANTHROPIC_API_KEY && !process.env.OPENAI_API_KEY) {
-    errors.push('ANTHROPIC_API_KEY or OPENAI_API_KEY is required');
+  if (!process.env.AI_GATEWAY_API_KEY) {
+    errors.push('AI_GATEWAY_API_KEY is required');
   }
 
   return {

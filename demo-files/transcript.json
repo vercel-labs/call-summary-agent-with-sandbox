@@ -1,0 +1,400 @@
+{
+  "callTranscripts": [
+    {
+      "callId": "demo-call-001",
+      "transcript": [
+        {
+          "speakerId": "speaker-1",
+          "topic": "Introduction",
+          "sentences": [
+            {
+              "start": 5000,
+              "end": 12000,
+              "text": "Hi Person2, Person3, thank you so much for taking the time to meet with us today."
+            },
+            {
+              "start": 12500,
+              "end": 22000,
+              "text": "I know you've been evaluating several solutions for your data pipeline needs, and I'm excited to show you how our platform can help streamline your operations."
+            },
+            {
+              "start": 23000,
+              "end": 32000,
+              "text": "Before we dive in, I'd love to hear a bit more about what you're currently working with and what challenges you're facing."
+            }
+          ]
+        },
+        {
+          "speakerId": "speaker-3",
+          "topic": "Introduction",
+          "sentences": [
+            {
+              "start": 35000,
+              "end": 48000,
+              "text": "Thanks Person1. We're currently using a combination of custom scripts and legacy ETL tools that have become quite difficult to maintain."
+            },
+            {
+              "start": 49000,
+              "end": 62000,
+              "text": "Our engineering team spends about 30% of their time just keeping the data pipelines running instead of building new features."
+            },
+            {
+              "start": 63000,
+              "end": 75000,
+              "text": "We need something more reliable and easier to manage, especially as we scale to handle more data sources."
+            }
+          ]
+        },
+        {
+          "speakerId": "speaker-2",
+          "topic": "Introduction",
+          "sentences": [
+            {
+              "start": 78000,
+              "end": 92000,
+              "text": "Yeah, and we're also dealing with compliance requirements. We need better visibility into our data lineage and the ability to audit transformations."
+            }
+          ]
+        },
+        {
+          "speakerId": "speaker-1",
+          "topic": "Platform Overview",
+          "sentences": [
+            {
+              "start": 120000,
+              "end": 135000,
+              "text": "That's exactly what we've built our platform to solve. Let me share my screen and walk you through the main components."
+            },
+            {
+              "start": 140000,
+              "end": 158000,
+              "text": "As you can see here, this is our main dashboard. You get a real-time view of all your data pipelines, their health status, and any issues that need attention."
+            },
+            {
+              "start": 160000,
+              "end": 178000,
+              "text": "The platform uses intelligent monitoring to detect anomalies before they become problems. We've reduced pipeline failures by 85% for our customers on average."
+            },
+            {
+              "start": 180000,
+              "end": 198000,
+              "text": "One thing that sets us apart is our no-code transformation builder. Your team can create complex data transformations without writing any Python or SQL."
+            }
+          ]
+        },
+        {
+          "speakerId": "speaker-2",
+          "topic": "Platform Overview",
+          "sentences": [
+            {
+              "start": 205000,
+              "end": 220000,
+              "text": "That's interesting. But our team is pretty technical. We actually prefer having full control over the transformations with code."
+            }
+          ]
+        },
+        {
+          "speakerId": "speaker-1",
+          "topic": "Platform Overview",
+          "sentences": [
+            {
+              "start": 225000,
+              "end": 245000,
+              "text": "Absolutely, and that's the beauty of our approach. You can use the visual builder for quick wins, or drop down into our SQL or Python IDE for full control."
+            },
+            {
+              "start": 248000,
+              "end": 268000,
+              "text": "We also have Git integration built in, so all your transformations can be version controlled and go through your normal code review process."
+            }
+          ]
+        },
+        {
+          "speakerId": "speaker-3",
+          "topic": "Platform Overview",
+          "sentences": [
+            {
+              "start": 275000,
+              "end": 290000,
+              "text": "Oh nice, that's important for us. We use GitHub Enterprise for everything."
+            }
+          ]
+        },
+        {
+          "speakerId": "speaker-1",
+          "topic": "Integration Demo",
+          "sentences": [
+            {
+              "start": 360000,
+              "end": 380000,
+              "text": "Perfect. Let me show you how the integration works. We have native connectors for over 200 data sources, including all the major cloud data warehouses."
+            },
+            {
+              "start": 385000,
+              "end": 405000,
+              "text": "I see from our earlier conversation that you're using Snowflake and have data coming from Salesforce, Stripe, and your internal PostgreSQL databases."
+            },
+            {
+              "start": 410000,
+              "end": 430000,
+              "text": "Here's how easy it is to set up a new source. I'll connect to a demo Salesforce instance. You just authenticate with OAuth, select the objects you want to sync, and we handle the rest."
+            }
+          ]
+        },
+        {
+          "speakerId": "speaker-2",
+          "topic": "Integration Demo",
+          "sentences": [
+            {
+              "start": 440000,
+              "end": 465000,
+              "text": "How does this integrate with our existing Salesforce setup? We have a lot of custom objects and fields that we've built over the years."
+            }
+          ]
+        },
+        {
+          "speakerId": "speaker-1",
+          "topic": "Integration Demo",
+          "sentences": [
+            {
+              "start": 470000,
+              "end": 495000,
+              "text": "Great question. Our Salesforce connector automatically discovers all your custom objects and fields. It maintains the relationships between objects and handles schema changes automatically."
+            },
+            {
+              "start": 500000,
+              "end": 520000,
+              "text": "We also support Salesforce's Change Data Capture, so you get near real-time sync for critical data without impacting your API limits."
+            },
+            {
+              "start": 525000,
+              "end": 545000,
+              "text": "Let me pull up an example. Here's a customer who has over 50 custom objects in Salesforce, and we're syncing all of them with sub-minute latency."
+            }
+          ]
+        },
+        {
+          "speakerId": "speaker-3",
+          "topic": "Integration Demo",
+          "sentences": [
+            {
+              "start": 555000,
+              "end": 575000,
+              "text": "That's impressive. What about data quality? We've had issues with duplicate records and inconsistent formatting in the past."
+            }
+          ]
+        },
+        {
+          "speakerId": "speaker-1",
+          "topic": "Integration Demo",
+          "sentences": [
+            {
+              "start": 580000,
+              "end": 600000,
+              "text": "We have built-in data quality checks that you can configure for each pipeline. Things like null checks, format validation, and duplicate detection."
+            }
+          ]
+        },
+        {
+          "speakerId": "speaker-1",
+          "topic": "Analytics Dashboard",
+          "sentences": [
+            {
+              "start": 600000,
+              "end": 620000,
+              "text": "Now let me show you the analytics dashboard that Person2, you mentioned earlier about compliance and data lineage."
+            },
+            {
+              "start": 625000,
+              "end": 650000,
+              "text": "This is our data lineage view. You can see exactly where every piece of data comes from, how it's been transformed, and where it ends up."
+            },
+            {
+              "start": 655000,
+              "end": 680000,
+              "text": "For compliance purposes, we maintain a complete audit trail. Every change to a pipeline, every data transformation, and every access event is logged and searchable."
+            }
+          ]
+        },
+        {
+          "speakerId": "speaker-2",
+          "topic": "Analytics Dashboard",
+          "sentences": [
+            {
+              "start": 690000,
+              "end": 715000,
+              "text": "Can we export these audit logs to our SIEM system? We use Splunk for centralized security monitoring."
+            }
+          ]
+        },
+        {
+          "speakerId": "speaker-1",
+          "topic": "Analytics Dashboard",
+          "sentences": [
+            {
+              "start": 720000,
+              "end": 745000,
+              "text": "Yes, we have a native Splunk integration. You can stream all audit events in real-time, and we support custom event formatting to match your existing schema."
+            },
+            {
+              "start": 750000,
+              "end": 775000,
+              "text": "We also support AWS CloudWatch, Datadog, and any system that can receive webhooks."
+            }
+          ]
+        },
+        {
+          "speakerId": "speaker-3",
+          "topic": "Analytics Dashboard",
+          "sentences": [
+            {
+              "start": 785000,
+              "end": 810000,
+              "text": "This is really comprehensive. I think this could significantly reduce the time our team spends on data infrastructure."
+            }
+          ]
+        },
+        {
+          "speakerId": "speaker-1",
+          "topic": "Pricing Discussion",
+          "sentences": [
+            {
+              "start": 840000,
+              "end": 865000,
+              "text": "Thank you, Person3. Should we talk about pricing? I want to make sure we find a package that fits your needs and budget."
+            },
+            {
+              "start": 870000,
+              "end": 895000,
+              "text": "Based on what you've shared about your data volume and the number of sources, I'd recommend our Growth tier, which starts at $3,000 per month."
+            },
+            {
+              "start": 900000,
+              "end": 925000,
+              "text": "That includes unlimited pipelines, up to 50 data sources, and our standard support package with 4-hour response time."
+            }
+          ]
+        },
+        {
+          "speakerId": "speaker-3",
+          "topic": "Pricing Discussion",
+          "sentences": [
+            {
+              "start": 935000,
+              "end": 965000,
+              "text": "The enterprise tier seems expensive compared to some of the other solutions we've been looking at. Can you help me understand what justifies the premium?"
+            }
+          ]
+        },
+        {
+          "speakerId": "speaker-1",
+          "topic": "Pricing Discussion",
+          "sentences": [
+            {
+              "start": 970000,
+              "end": 1000000,
+              "text": "That's a fair question. The key difference is total cost of ownership. Our customers typically see a 40% reduction in engineering time spent on data infrastructure."
+            },
+            {
+              "start": 1005000,
+              "end": 1035000,
+              "text": "With your team spending 30% of their time on pipeline maintenance, that translates to significant savings. Let me pull up our ROI calculator."
+            },
+            {
+              "start": 1040000,
+              "end": 1070000,
+              "text": "Based on your team size, if we can reduce that maintenance time by even half, you're looking at the equivalent of two full-time engineers worth of productivity recovered."
+            }
+          ]
+        },
+        {
+          "speakerId": "speaker-2",
+          "topic": "Pricing Discussion",
+          "sentences": [
+            {
+              "start": 1080000,
+              "end": 1105000,
+              "text": "That's a compelling way to look at it. We've definitely felt the pain of having senior engineers doing maintenance instead of feature work."
+            }
+          ]
+        },
+        {
+          "speakerId": "speaker-3",
+          "topic": "Next Steps",
+          "sentences": [
+            {
+              "start": 1020000,
+              "end": 1045000,
+              "text": "This has been really helpful. I think we need to loop in our security team before making a decision. They'll want to review the compliance certifications."
+            }
+          ]
+        },
+        {
+          "speakerId": "speaker-1",
+          "topic": "Next Steps",
+          "sentences": [
+            {
+              "start": 1050000,
+              "end": 1075000,
+              "text": "Absolutely, I'll send over our SOC 2 Type II report, GDPR documentation, and our security whitepaper. Would it be helpful to schedule a call with your security team directly?"
+            }
+          ]
+        },
+        {
+          "speakerId": "speaker-3",
+          "topic": "Next Steps",
+          "sentences": [
+            {
+              "start": 1085000,
+              "end": 1110000,
+              "text": "Yes, that would be great. Let's plan for that next week if possible."
+            }
+          ]
+        },
+        {
+          "speakerId": "speaker-2",
+          "topic": "Next Steps",
+          "sentences": [
+            {
+              "start": 1115000,
+              "end": 1145000,
+              "text": "I'd also like to get the technical documentation for your API. We'll need to evaluate how it fits with our CI/CD pipeline."
+            }
+          ]
+        },
+        {
+          "speakerId": "speaker-1",
+          "topic": "Next Steps",
+          "sentences": [
+            {
+              "start": 1150000,
+              "end": 1180000,
+              "text": "Of course, Person2. I'll send that over today along with some example integration patterns for GitHub Actions and Jenkins."
+            },
+            {
+              "start": 1185000,
+              "end": 1210000,
+              "text": "And I'll also include the ROI calculator I mentioned so you can run the numbers with your actual team costs."
+            },
+            {
+              "start": 1215000,
+              "end": 1240000,
+              "text": "Thank you both for your time today. I'm really excited about the possibility of working together. Is there anything else you'd like to discuss before we wrap up?"
+            }
+          ]
+        },
+        {
+          "speakerId": "speaker-3",
+          "topic": "Next Steps",
+          "sentences": [
+            {
+              "start": 1250000,
+              "end": 1280000,
+              "text": "I think we're good for now. We'll review the materials and get back to you after the security review. Thanks for the thorough demo, Person1."
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

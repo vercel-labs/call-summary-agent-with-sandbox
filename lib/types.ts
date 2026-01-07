@@ -335,14 +335,6 @@ export interface GongParty {
   methods?: string[];
 }
 
-/**
- * File structure for sandbox context
- */
-export interface SandboxFile {
-  path: string;
-  content: Buffer;
-}
-
 export interface GongCallFile {
   filename: string;
   markdown: string;
