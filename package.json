@@ -9,8 +9,6 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@ai-sdk/anthropic": "beta",
-    "@ai-sdk/openai": "beta",
     "@slack/web-api": "^7.13.0",
     "@vercel/sandbox": "^1.0.4",
     "ai": "beta",

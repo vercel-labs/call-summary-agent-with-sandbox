@@ -1,0 +1,58 @@
+{
+  "callData": {
+    "metaData": {
+      "id": "demo-call-001",
+      "url": "https://app.gong.io/call?id=demo-call-001",
+      "title": "CompanyName - Product Demo",
+      "scheduled": "2025-01-06T14:00:00Z",
+      "started": "2025-01-06T14:02:00Z",
+      "duration": 1200,
+      "system": "Zoom",
+      "meetingUrl": "https://zoom.us/j/123456789"
+    },
+    "parties": [
+      {
+        "id": "party-1",
+        "emailAddress": "person1@ourcompany.com",
+        "name": "Person1",
+        "title": "Senior Account Executive",
+        "userId": "user-1",
+        "speakerId": "speaker-1",
+        "affiliation": "Internal"
+      },
+      {
+        "id": "party-2",
+        "emailAddress": "person2@companyname.com",
+        "name": "Person2",
+        "title": "VP of Engineering",
+        "userId": null,
+        "speakerId": "speaker-2",
+        "affiliation": "External"
+      },
+      {
+        "id": "party-3",
+        "emailAddress": "person3@companyname.com",
+        "name": "Person3",
+        "title": "CTO",
+        "userId": null,
+        "speakerId": "speaker-3",
+        "affiliation": "External"
+      }
+    ],
+    "context": [
+      {
+        "system": "Salesforce",
+        "objects": [
+          {
+            "objectType": "Account",
+            "objectId": "001xx000003DEMO",
+            "fields": [
+              { "name": "Name", "value": "CompanyName" },
+              { "name": "Industry", "value": "Technology" }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

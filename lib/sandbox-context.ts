@@ -13,7 +13,7 @@
  * or another data warehouse to store and query call history.
  */
 
-import type { SandboxFile, GongWebhookData } from './types';
+import type { GongWebhookData } from './types';
 import {
   convertTranscriptToMarkdown,
   fetchGongTranscript,
@@ -65,12 +65,14 @@ function formatAccountMarkdown(
  * Creates a file structure with:
  * - gong-calls/ - Call transcript markdown files
  * - salesforce/ - CRM data (if Salesforce is enabled)
+ *
+ * @returns Record<string, string> - Map of file paths to content
  */
 export async function generateFilesForSandbox(options: {
   webhookData: GongWebhookData;
   sfdcAccountId?: string;
-}): Promise<SandboxFile[]> {
-  const files: SandboxFile[] = [];
+}): Promise<Record<string, string>> {
+  const files: Record<string, string> = {};
 
   // In demo mode, use mock data instead of fetching from Gong API
   let transcript;
@@ -93,10 +95,7 @@ export async function generateFilesForSandbox(options: {
   const callTitle = webhookData.callData.metaData.title || 'call';
   const filename = `${callId}-${callTitle.toLowerCase().replace(/[^a-z0-9]/g, '-')}.md`;
 
-  files.push({
-    path: `gong-calls/${filename}`,
-    content: Buffer.from(markdown, 'utf-8'),
-  });
+  files[`gong-calls/${filename}`] = markdown;
 
   // Add Salesforce data if enabled and account ID is provided
   if (isSalesforceEnabled() && options.sfdcAccountId) {
@@ -104,10 +103,7 @@ export async function generateFilesForSandbox(options: {
       const { accountData } = await getAccountData(options.sfdcAccountId);
 
       if (accountData) {
-        files.push({
-          path: 'salesforce/account.md',
-          content: Buffer.from(formatAccountMarkdown(accountData), 'utf-8'),
-        });
+        files['salesforce/account.md'] = formatAccountMarkdown(accountData);
       }
     } catch (error) {
       console.error('Failed to fetch Salesforce data:', error);
@@ -133,19 +129,13 @@ export async function generateFilesForSandbox(options: {
     2
   );
 
-  files.push({
-    path: 'gong-calls/metadata.json',
-    content: Buffer.from(metadataJson, 'utf-8'),
-  });
+  files['gong-calls/metadata.json'] = metadataJson;
 
   // In demo mode, add additional context files
   if (config.demo.enabled) {
     const demoFiles = getDemoContextFiles();
     for (const demoFile of demoFiles) {
-      files.push({
-        path: demoFile.path,
-        content: Buffer.from(demoFile.content, 'utf-8'),
-      });
+      files[demoFile.path] = demoFile.content;
     }
     console.log(`Demo mode: loaded ${demoFiles.length} additional context files`);
   }
@@ -156,11 +146,11 @@ export async function generateFilesForSandbox(options: {
 /**
  * Generate a file tree representation for the agent prompt
  */
-export function generateFileTree(files: SandboxFile[]): string {
+export function generateFileTree(files: Record<string, string>): string {
   const tree: string[] = ['.'];
 
   // Sort files by path
-  const sortedPaths = files.map((f) => f.path).sort();
+  const sortedPaths = Object.keys(files).sort();
 
   // Build tree structure
   const dirs = new Set<string>();
@@ -190,4 +180,3 @@ export function generateFileTree(files: SandboxFile[]): string {
 
   return tree.join('\n');
 }
-
