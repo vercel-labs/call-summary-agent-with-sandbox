@@ -1,5 +1,5 @@
 /**
- * Gong Call Summary Agent
+ * Sales Call Summary Agent
  */
 
 import { Output, ToolLoopAgent } from 'ai';
@@ -20,7 +20,7 @@ const callOptionsSchema = z.object({
 });
 
 /**
- * The Gong Call Summary Agent
+ * The Sales Call Summary Agent
  *
  * Uses ToolLoopAgent from the Vercel AI SDK to:
  * 1. Create a sandbox environment with call context
@@ -94,7 +94,7 @@ ${fileTree}
 
 ## Instructions
 
-1. First, explore the call transcript using the executeCommand tool
+1. First, explore the call transcript using the bash tool
 2. Search for key topics, objections, and action items
 3. Analyze how objections were handled
 4. Generate a comprehensive summary
@@ -104,7 +104,7 @@ ${fileTree}
 - Company: ${config.companyName}`;
 
     // Create tools with sandbox instance
-    const tools = createAgentTools(sandbox);
+    const tools = await createAgentTools(sandbox);
 
     return {
       ...settings,
@@ -127,9 +127,9 @@ export async function runGongAgent(
   const result = await gongSummaryAgent.generate({
     prompt: `Analyze this call transcript and provide a comprehensive summary.
 
-Focus on: Key discussion points and decisions,Any objections or concerns raised, Action items and next steps, Overall call assessment
+Focus on: Key discussion points and decisions, Any objections or concerns raised, Action items and next steps, Overall call assessment
 
-Use the executeCommand tool to explore the transcript files before generating your summary.`,
+Use the bash tool to explore the transcript files before generating your summary.`,
     options: {
       webhookData,
       sfdcAccountId,

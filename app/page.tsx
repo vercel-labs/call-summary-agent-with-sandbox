@@ -1,7 +1,7 @@
 /**
- * Landing Page - Gong Call Summary Agent
+ * Landing Page - Sales Call Summary Agent
  *
- * Minimalist landing page for the Gong Call Summary Agent.
+ * Minimalist landing page for the Sales Call Summary Agent.
  */
 
 export default function HomePage() {
@@ -27,7 +27,7 @@ export default function HomePage() {
           letterSpacing: '-0.02em',
         }}
       >
-        Gong Call Summary Agent
+        Sales Call Summary Agent
       </h1>
 
       {/* Subtitle */}
@@ -146,7 +146,7 @@ export default function HomePage() {
           GitHub
         </a>
         <a
-          href="https://github.com/vercel-labs/call-summary-agent-with-sandbox/tree/main?tab=readme-ov-file#gong-call-summary-agent"
+          href="https://github.com/vercel-labs/call-summary-agent-with-sandbox/tree/main?tab=readme-ov-file#sales-call-summary-agent"
           target="_blank"
           rel="noopener noreferrer"
           style={{ color: '#888', textDecoration: 'none' }}

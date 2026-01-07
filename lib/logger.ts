@@ -1,5 +1,5 @@
 /**
- * Simple structured logger for the Gong Call Summary Agent
+ * Simple structured logger for the Sales Call Summary Agent
  *
  * Features:
  * - Environment-aware logging (debug in dev, info in prod)

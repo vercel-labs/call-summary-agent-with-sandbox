@@ -1,8 +1,8 @@
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Gong Call Summary Agent',
-  description: 'AI-powered call summary agent using Vercel Sandbox',
+  title: 'Sales Call Summary Agent',
+  description: 'AI-powered sales call summary agent using Vercel Sandbox',
 };
 
 export default function RootLayout({

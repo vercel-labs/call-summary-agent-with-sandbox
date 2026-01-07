@@ -1,5 +1,5 @@
 /**
- * Gong Call Summary Workflow
+ * Sales Call Summary Workflow
  *
  * This workflow processes Gong call webhooks and generates AI-powered summaries.
  * It uses the Vercel Workflow DevKit with the "use workflow" directive for

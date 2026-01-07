@@ -1,14 +1,14 @@
 import { z } from 'zod';
 
 /**
- * Default system prompt for the Gong call summary agent. This can be customized via the AGENT_SYSTEM_PROMPT environment variable.
+ * Default system prompt for the Sales Call Summary Agent. This can be customized via the AGENT_SYSTEM_PROMPT environment variable.
  */
 const DEFAULT_SYSTEM_PROMPT = `You are an expert sales call analyst that reviews call transcripts and provides actionable insights.
 
 Your task: Review the call context and use the tools to gather additional information before writing the summary. Then write a summary and extract objections, tasks, and key insights.
 
 You have access to multiple tools for exploring call context:
-1. **executeCommand** - Execute shell commands to search and explore call transcript files
+1. **bash** - Execute shell commands to search and explore call transcript files
 
 ## Filesystem structure will be provided in context
 
@@ -88,7 +88,7 @@ export interface Playbook {
 }
 
 /**
- * Centralized configuration for the Gong Call Summary Agent.
+ * Centralized configuration for the Sales Call Summary Agent.
  * All settings can be configured via environment variables.
  */
 export const config = {
@@ -129,6 +129,12 @@ export const config = {
   // Define your own playbooks or load from JSON
   playbooks: [] as Playbook[],
 
+  // Demo mode configuration
+  // When enabled, uses mock Gong data instead of real API calls
+  demo: {
+    enabled: process.env.DEMO_MODE === 'true',
+  },
+
   // Sandbox configuration
   sandbox: {
     timeout: '10m' as const, // Sandbox timeout duration
@@ -137,16 +143,21 @@ export const config = {
 
 /**
  * Validate required configuration
+ * In demo mode, Gong credentials are not required
  */
 export function validateConfig(): { valid: boolean; errors: string[] } {
   const errors: string[] = [];
 
-  if (!config.gong.accessKey) {
-    errors.push('GONG_ACCESS_KEY is required');
+  // Skip Gong credential validation in demo mode
+  if (!config.demo.enabled) {
+    if (!config.gong.accessKey) {
+      errors.push('GONG_ACCESS_KEY is required');
+    }
+    if (!config.gong.secretKey) {
+      errors.push('GONG_SECRET_KEY is required');
+    }
   }
-  if (!config.gong.secretKey) {
-    errors.push('GONG_SECRET_KEY is required');
-  }
+
   if (!process.env.ANTHROPIC_API_KEY && !process.env.OPENAI_API_KEY) {
     errors.push('ANTHROPIC_API_KEY or OPENAI_API_KEY is required');
   }

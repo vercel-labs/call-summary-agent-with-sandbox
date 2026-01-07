@@ -1,5 +1,5 @@
 /**
- * Workflow Steps for Gong Call Summary
+ * Workflow Steps for Sales Call Summary
  *
  * Each step is marked with "use step" for durability and automatic retries.
  * Steps are the building blocks of workflows and should be idempotent.
@@ -7,10 +7,12 @@
 
 import type { GongWebhook, GongWebhookData } from '@/lib/types';
 import type { AgentOutput } from '@/lib/config';
+import { config } from '@/lib/config';
 import {
   fetchGongTranscript,
   convertTranscriptToMarkdown,
 } from '@/lib/gong-client';
+import { getMockTranscript, getMockWebhookData } from '@/lib/mock-data';
 import { runGongAgent } from '@/lib/agent';
 import { sendSlackSummary, isSlackEnabled } from '@/lib/slack';
 import { createLogger } from '@/lib/logger';
@@ -29,8 +31,25 @@ export async function stepGetGongTranscript(
     const callId = webhookData.callData.metaData.id;
     logger.info('Fetching transcript', { callId });
 
-    const apiResponse = await fetchGongTranscript(callId);
-    const markdown = convertTranscriptToMarkdown(apiResponse, webhookData);
+    // In demo mode, use mock data instead of fetching from Gong API
+    let apiResponse;
+    let webhookForMarkdown: GongWebhook;
+
+    if (config.demo.enabled) {
+      logger.info('Demo mode: using mock transcript');
+      apiResponse = getMockTranscript();
+      const mockWebhookData = getMockWebhookData();
+      webhookForMarkdown = {
+        ...mockWebhookData,
+        isTest: true,
+        isPrivate: false,
+      };
+    } else {
+      apiResponse = await fetchGongTranscript(callId);
+      webhookForMarkdown = webhookData;
+    }
+
+    const markdown = convertTranscriptToMarkdown(apiResponse, webhookForMarkdown);
 
     logger.info('Transcript fetched', {
       callId,

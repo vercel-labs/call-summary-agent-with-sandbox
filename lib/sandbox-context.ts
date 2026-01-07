@@ -19,6 +19,12 @@ import {
   fetchGongTranscript,
 } from './gong-client';
 import { getAccountData, isSalesforceEnabled } from './salesforce';
+import { config } from './config';
+import {
+  getMockTranscript,
+  getMockWebhookData,
+  getDemoContextFiles,
+} from './mock-data';
 
 /**
  * Format account data as markdown
@@ -66,15 +72,25 @@ export async function generateFilesForSandbox(options: {
 }): Promise<SandboxFile[]> {
   const files: SandboxFile[] = [];
 
-  // Fetch transcript for the current call
-  const transcript = await fetchGongTranscript(
-    options.webhookData.callData.metaData.id
-  );
-  const markdown = convertTranscriptToMarkdown(transcript, options.webhookData);
+  // In demo mode, use mock data instead of fetching from Gong API
+  let transcript;
+  let webhookData: GongWebhookData;
+
+  if (config.demo.enabled) {
+    transcript = getMockTranscript();
+    webhookData = getMockWebhookData();
+  } else {
+    transcript = await fetchGongTranscript(
+      options.webhookData.callData.metaData.id
+    );
+    webhookData = options.webhookData;
+  }
+
+  const markdown = convertTranscriptToMarkdown(transcript, webhookData);
 
   // Add main call transcript
-  const callId = options.webhookData.callData.metaData.id;
-  const callTitle = options.webhookData.callData.metaData.title || 'call';
+  const callId = webhookData.callData.metaData.id;
+  const callTitle = webhookData.callData.metaData.title || 'call';
   const filename = `${callId}-${callTitle.toLowerCase().replace(/[^a-z0-9]/g, '-')}.md`;
 
   files.push({
@@ -101,12 +117,12 @@ export async function generateFilesForSandbox(options: {
   // Add call metadata as JSON for easy parsing
   const metadataJson = JSON.stringify(
     {
-      callId: options.webhookData.callData.metaData.id,
-      title: options.webhookData.callData.metaData.title,
-      scheduled: options.webhookData.callData.metaData.scheduled,
-      duration: options.webhookData.callData.metaData.duration,
-      system: options.webhookData.callData.metaData.system,
-      participants: options.webhookData.callData.parties?.map((p) => ({
+      callId: webhookData.callData.metaData.id,
+      title: webhookData.callData.metaData.title,
+      scheduled: webhookData.callData.metaData.scheduled,
+      duration: webhookData.callData.metaData.duration,
+      system: webhookData.callData.metaData.system,
+      participants: webhookData.callData.parties?.map((p) => ({
         name: p.name,
         email: p.emailAddress,
         affiliation: p.affiliation,
@@ -121,6 +137,18 @@ export async function generateFilesForSandbox(options: {
     path: 'gong-calls/metadata.json',
     content: Buffer.from(metadataJson, 'utf-8'),
   });
+
+  // In demo mode, add additional context files
+  if (config.demo.enabled) {
+    const demoFiles = getDemoContextFiles();
+    for (const demoFile of demoFiles) {
+      files.push({
+        path: demoFile.path,
+        content: Buffer.from(demoFile.content, 'utf-8'),
+      });
+    }
+    console.log(`Demo mode: loaded ${demoFiles.length} additional context files`);
+  }
 
   return files;
 }

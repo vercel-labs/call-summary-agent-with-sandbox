@@ -9,7 +9,8 @@ import { start } from 'workflow/api';
 import type { GongWebhook } from '@/lib/types';
 import { workflowGongSummary } from '@/workflows/gong-summary';
 import { createLogger } from '@/lib/logger';
-import { validateConfig } from '@/lib/config';
+import { validateConfig, config } from '@/lib/config';
+import { getMockWebhookData } from '@/lib/mock-data';
 
 const logger = createLogger('gong-webhook');
 
@@ -28,7 +29,19 @@ export async function POST(request: Request) {
   }
 
   try {
-    const data = (await request.json()) as GongWebhook;
+    // In demo mode, use mock webhook data; otherwise parse the request body
+    let data: GongWebhook;
+    if (config.demo.enabled) {
+      const mockData = getMockWebhookData();
+      data = {
+        ...mockData,
+        isTest: true,
+        isPrivate: false,
+      };
+      logger.info('Demo mode: using mock webhook data');
+    } else {
+      data = (await request.json()) as GongWebhook;
+    }
 
     console.log('Data payload: ', data);
     logger.info('Webhook received', {
@@ -70,7 +83,8 @@ export async function GET() {
 
   return Response.json({
     status: 'ok',
-    service: 'gong-call-summary-agent',
+    service: 'sales-call-summary-agent',
+    demoMode: config.demo.enabled,
     configValid: configValidation.valid,
     configErrors: configValidation.errors,
   });
