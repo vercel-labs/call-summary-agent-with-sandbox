@@ -17,7 +17,7 @@ import { runGongAgent } from '@/lib/agent';
 import { sendSlackSummary, isSlackEnabled } from '@/lib/slack';
 import { createLogger } from '@/lib/logger';
 
-const logger = createLogger('gong-steps');
+const logger = createLogger('sales-call-steps');
 
 /**
  * Step: Fetch and convert Gong transcript to markdown

@@ -9,7 +9,10 @@ import ms from 'ms';
 import { config, agentOutputSchema } from './config';
 import { createAgentTools } from './tools';
 import { generateFilesForSandbox, generateFileTree } from './sandbox-context';
+import { createLogger } from './logger';
 import type { GongWebhookData } from './types';
+
+const logger = createLogger('agent');
 
 /**
  * Input options for the agent
@@ -33,22 +36,20 @@ export const gongSummaryAgent = new ToolLoopAgent({
   callOptionsSchema,
 
   prepareCall: async ({ options, ...settings }) => {
-    console.log('[DEBUG] prepareCall started');
+    logger.debug('prepareCall started');
 
-    // Create sandbox environment
-    console.log('[DEBUG] Creating sandbox...');
+    logger.debug('Creating sandbox...');
     const sandbox = await Sandbox.create({
       timeout: ms(config.sandbox.timeout),
     });
-    console.log('[DEBUG] Sandbox created');
+    logger.debug('Sandbox created');
 
-    // Generate context files for the sandbox
-    console.log('[DEBUG] Generating files for sandbox...');
+    logger.debug('Generating files for sandbox...');
     const files = await generateFilesForSandbox({
       webhookData: options.webhookData,
       sfdcAccountId: options.sfdcAccountId,
     });
-    console.log('[DEBUG] Files generated:', Object.keys(files).length, 'files');
+    logger.debug('Files generated', { count: Object.keys(files).length });
 
     // Generate file tree for the prompt
     const fileTree = generateFileTree(files);
@@ -86,13 +87,11 @@ ${fileTree}
 - Current date: ${new Date().toISOString()}
 - Company: ${config.companyName}`;
 
-    // Create tools with sandbox instance and files
-    // Files are written to /workspace by default
-    console.log('[DEBUG] Creating agent tools...');
+    logger.debug('Creating agent tools...');
     const tools = await createAgentTools(sandbox, files);
-    console.log('[DEBUG] Agent tools created');
+    logger.debug('Agent tools created');
 
-    console.log('[DEBUG] prepareCall complete, returning settings');
+    logger.debug('prepareCall complete');
     return {
       ...settings,
       instructions,
@@ -111,12 +110,13 @@ export async function runGongAgent(
   webhookData: GongWebhookData,
   sfdcAccountId?: string
 ): Promise<z.infer<typeof agentOutputSchema>> {
-  console.log('[DEBUG] runGongAgent called');
-  console.log('[DEBUG] Model:', config.model);
-  console.log('[DEBUG] webhookData callId:', webhookData.callData.metaData.id);
+  logger.debug('runGongAgent called', {
+    model: config.model,
+    callId: webhookData.callData.metaData.id,
+  });
 
   try {
-    console.log('[DEBUG] Starting gongSummaryAgent.generate()');
+    logger.debug('Starting AI agent...');
     const result = await gongSummaryAgent.generate({
       prompt: `Analyze this call transcript and provide a comprehensive summary.
 
@@ -129,16 +129,10 @@ Use the bash tool to explore the transcript files before generating your summary
       },
     });
 
-    console.log('[DEBUG] Agent completed successfully');
+    logger.debug('Agent completed successfully');
     return result.output as z.infer<typeof agentOutputSchema>;
   } catch (error) {
-    console.error('[DEBUG] Agent error:', error);
-    console.error('[DEBUG] Error name:', (error as Error).name);
-    console.error('[DEBUG] Error message:', (error as Error).message);
-    console.error('[DEBUG] Error stack:', (error as Error).stack);
-    if (error && typeof error === 'object' && 'cause' in error) {
-      console.error('[DEBUG] Error cause:', (error as any).cause);
-    }
+    logger.error('Agent error', error);
     throw error;
   }
 }

@@ -1,12 +1,8 @@
 /**
  * Simple structured logger for the Sales Call Summary Agent
- *
- * Features:
- * - Environment-aware logging (debug in dev, info in prod)
- * - Configurable via LOG_LEVEL env var
- * - Request ID tracking for distributed tracing
- * - Context-based logging
  */
+
+import { logStream } from './log-stream';
 
 export type LogLevel = 'debug' | 'info' | 'warn' | 'error';
 
@@ -41,19 +37,32 @@ export class Logger {
     return parts.join(' ');
   }
 
+  private emit(level: LogLevel, message: string, data?: unknown) {
+    logStream.emit({
+      time: new Date().toISOString(),
+      context: this.context,
+      level,
+      message,
+      data: data as Record<string, unknown> | undefined,
+    });
+  }
+
   debug(message: string, data?: unknown) {
     if (!shouldLog('debug')) return;
     console.log(this.formatMessage('debug', message), data ?? '');
+    this.emit('debug', message, data);
   }
 
   info(message: string, data?: unknown) {
     if (!shouldLog('info')) return;
     console.log(this.formatMessage('info', message), data ?? '');
+    this.emit('info', message, data);
   }
 
   warn(message: string, data?: unknown) {
     if (!shouldLog('warn')) return;
     console.warn(this.formatMessage('warn', message), data ?? '');
+    this.emit('warn', message, data);
   }
 
   error(message: string, error?: Error | unknown) {
@@ -65,6 +74,7 @@ export class Logger {
     if (error instanceof Error && error.stack) {
       console.error(error.stack);
     }
+    this.emit('error', message, error instanceof Error ? { error: error.message } : error);
   }
 
   /**
