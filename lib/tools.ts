@@ -6,40 +6,35 @@
 
 import { createBashTool } from 'bash-tool';
 import type { Sandbox } from '@vercel/sandbox';
-import { createLogger } from './logger';
 
-const logger = createLogger('bash-tool');
+export type LogEmitter = (
+  level: 'info' | 'warn' | 'error',
+  context: string,
+  message: string,
+  data?: Record<string, unknown>
+) => Promise<void>;
 
 /**
  * Create agent tools with bash-tool
  *
- * Provides a bash tool for the agent to run shell commands within the sandbox
- * to search and explore call transcript files.
- *
  * @param sandbox - The Vercel sandbox instance
  * @param files - Files to write to the sandbox (path -> content)
+ * @param emit - Optional log emitter for streaming logs
  */
 export async function createAgentTools(
   sandbox: Sandbox,
-  files: Record<string, string>
+  files: Record<string, string>,
+  emit?: LogEmitter
 ) {
   const { tools } = await createBashTool({
     sandbox,
     files,
     destination: '/vercel/sandbox',
     onBeforeBashCall: ({ command }) => {
-      logger.info('Bash command starting', { command });
+      if (emit) emit('info', 'bash', `$ ${command}`);
       return undefined;
     },
-    onAfterBashCall: ({ command, result }) => {
-      logger.info('Bash command completed', {
-        command,
-        exitCode: result.exitCode,
-        stdoutLength: result.stdout?.length || 0,
-        stderr: result.stderr || '',
-      });
-      return undefined;
-    },
+    onAfterBashCall: () => undefined,
   });
 
   return tools;

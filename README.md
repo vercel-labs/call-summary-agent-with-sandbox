@@ -19,13 +19,9 @@ An AI-powered agent that automatically summarizes sales calls using Vercel's San
 
 ## One-Click Deploy (Demo Mode)
 
-Deploy to Vercel and try it immediately with demo data:
+You can deploy to Vercel and try it immediately with demo data with one click:
+[![Deploy with Vercel](https://vercel.com/button)]()
 
-[![Deploy with Vercel]()
-
-**You only need one thing:** `AI_GATEWAY_API_KEY`
-
-Get it from your [Vercel AI Gateway settings](https://vercel.com/docs/ai-gateway).
 
 > Demo mode is **enabled by default** - no Gong credentials required to test!
 

@@ -15,9 +15,33 @@ import {
 import { getMockTranscript, getMockWebhookData } from '@/lib/mock-data';
 import { runGongAgent } from '@/lib/agent';
 import { sendSlackSummary, isSlackEnabled } from '@/lib/slack';
-import { createLogger } from '@/lib/logger';
+import { getWritable } from 'workflow';
 
-const logger = createLogger('gong-steps');
+export type StreamLogEntry = {
+  time: string;
+  context: string;
+  level: 'info' | 'warn' | 'error';
+  message: string;
+  data?: Record<string, unknown>;
+};
+
+async function emitLog(
+  level: StreamLogEntry['level'],
+  context: string,
+  message: string,
+  data?: Record<string, unknown>
+) {
+  const writable = getWritable<StreamLogEntry>({ namespace: 'logs' });
+  const writer = writable.getWriter();
+  await writer.write({
+    time: new Date().toISOString(),
+    context,
+    level,
+    message,
+    data,
+  });
+  writer.releaseLock();
+}
 
 /**
  * Step: Fetch and convert Gong transcript to markdown
@@ -29,36 +53,26 @@ export async function stepGetGongTranscript(
 
   try {
     const callId = webhookData.callData.metaData.id;
-    logger.info('Fetching transcript', { callId });
+    await emitLog('info', 'transcript', 'Fetching transcript', { callId });
 
-    // In demo mode, use mock data instead of fetching from Gong API
     let apiResponse;
     let webhookForMarkdown: GongWebhook;
 
     if (config.demo.enabled) {
-      logger.info('Demo mode: using mock transcript');
+      await emitLog('info', 'transcript', 'Using mock transcript (demo mode)');
       apiResponse = getMockTranscript();
-      const mockWebhookData = getMockWebhookData();
-      webhookForMarkdown = {
-        ...mockWebhookData,
-        isTest: true,
-        isPrivate: false,
-      };
+      webhookForMarkdown = { ...getMockWebhookData(), isTest: true, isPrivate: false };
     } else {
       apiResponse = await fetchGongTranscript(callId);
       webhookForMarkdown = webhookData;
     }
 
     const markdown = convertTranscriptToMarkdown(apiResponse, webhookForMarkdown);
-
-    logger.info('Transcript fetched', {
-      callId,
-      length: markdown.length,
-    });
+    await emitLog('info', 'transcript', 'Transcript ready', { length: markdown.length });
 
     return markdown;
   } catch (error) {
-    logger.error('Failed to fetch transcript', error);
+    await emitLog('error', 'transcript', 'Failed to fetch transcript', { error: String(error) });
     return null;
   }
 }
@@ -72,19 +86,11 @@ export async function stepRunAgent(options: {
 }): Promise<AgentOutput> {
   'use step';
 
-  logger.info('Running agent', {
-    callId: options.webhookData.callData.metaData.id,
-    hasSfdcAccountId: !!options.sfdcAccountId,
-  });
+  const result = await runGongAgent(options.webhookData, options.sfdcAccountId, emitLog);
 
-  const result = await runGongAgent(
-    options.webhookData,
-    options.sfdcAccountId
-  );
-
-  logger.info('Agent completed', {
-    tasksCount: result.tasks.length,
-    objectionsCount: result.objections.length,
+  await emitLog('info', 'agent', 'Agent completed', {
+    tasks: result.tasks.length,
+    objections: result.objections.length,
   });
 
   return result;
@@ -107,18 +113,17 @@ export async function stepSendSlackSummary(
   'use step';
 
   if (!isSlackEnabled()) {
-    logger.info('Slack not enabled, skipping notification');
+    await emitLog('info', 'slack', 'Slack not configured, skipping');
     return;
   }
 
-  logger.info('Sending Slack summary');
-
+  await emitLog('info', 'slack', 'Sending to Slack');
   const result = await sendSlackSummary(output, recordingUrl);
 
   if (result.success) {
-    logger.info('Slack summary sent successfully');
+    await emitLog('info', 'slack', 'Sent to Slack');
   } else {
-    logger.warn('Failed to send Slack summary', { error: result.error });
+    await emitLog('warn', 'slack', 'Failed to send to Slack', { error: result.error });
   }
 }
 
