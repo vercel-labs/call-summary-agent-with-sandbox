@@ -10,11 +10,11 @@
  * checkpoint. Learn more: https://useworkflow.dev/docs/ai
  */
 
-import { Output, ToolLoopAgent } from 'ai';
+import { ToolLoopAgent } from 'ai';
 import { z } from 'zod';
 import { Sandbox } from '@vercel/sandbox';
 import ms from 'ms';
-import { config, agentOutputSchema } from './config';
+import { config } from './config';
 import { createAgentTools } from './tools';
 import { generateFilesForSandbox, generateFileTree } from './sandbox-context';
 import type { GongWebhookData } from './types';
@@ -94,9 +94,6 @@ function createGongSummaryAgent(log: LogFn) {
         ...settings,
         instructions,
         tools,
-        output: Output.object({
-          schema: agentOutputSchema,
-        }),
       };
     },
   });
@@ -105,11 +102,12 @@ function createGongSummaryAgent(log: LogFn) {
 /**
  * Run the agent on a call transcript.
  * Requires a WritableStream for real-time log streaming.
+ * Returns the agent's text response as a string.
  */
 export async function runGongAgent(
   webhookData: GongWebhookData,
   logStream: WritableStream<StreamLogEntry>
-): Promise<z.infer<typeof agentOutputSchema>> {
+): Promise<string> {
   const writer = logStream.getWriter();
 
   const log: LogFn = (level, context, message, data) => {
@@ -121,7 +119,7 @@ export async function runGongAgent(
 
     const agent = createGongSummaryAgent(log);
 
-    log('info', 'agent', 'Calling AI model...');
+    log('info', 'agent', `Calling AI model: ${config.model}`);
     const result = await agent.generate({
       prompt: TASK_PROMPT,
       options: {
@@ -129,8 +127,9 @@ export async function runGongAgent(
         log,
       },
     });
+
     log('info', 'agent', 'Analysis complete');
-    return result.output as z.infer<typeof agentOutputSchema>;
+    return result.text;
   } catch (error) {
     log('error', 'agent', `Agent failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
     throw error;

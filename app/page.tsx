@@ -75,6 +75,10 @@ export default function HomePage() {
             try {
               const log = JSON.parse(data) as LogEntry;
               setLogs((prev) => [...prev, log]);
+
+              if (log.context === 'workflow' && log.message === 'Workflow complete') {
+                setIsRunning(false);
+              }
             } catch {
               // Skip invalid JSON
             }

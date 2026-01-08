@@ -49,14 +49,6 @@ export async function generateFilesForSandbox(options: {
 
   files[`gong-calls/${filename}`] = markdown;
 
-  // To add Salesforce CRM data, uncomment:
-  // if (isSalesforceEnabled() && sfdcAccountId) {
-  //   const { accountData } = await getAccountData(sfdcAccountId);
-  //   if (accountData) {
-  //     files['salesforce/account.md'] = formatAccountMarkdown(accountData);
-  //   }
-  // }
-
   // Add call metadata as JSON for easy parsing
   const metadataJson = JSON.stringify(
     {

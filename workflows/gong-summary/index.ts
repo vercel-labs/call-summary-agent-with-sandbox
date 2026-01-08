@@ -19,8 +19,6 @@ import {
   stepRunAgent,
   stepSendSlackSummary,
   stepEmitResult,
-  stepWorkflowStarted,
-  stepWorkflowComplete,
 } from './steps';
 
 /**
@@ -35,11 +33,11 @@ export async function workflowGongSummary(data: GongWebhook) {
   'use workflow';
 
   const logger = createLogger('gong-summary');
+
   const callId = data.callData.metaData.id;
   const callTitle = data.callData.metaData.title || 'Untitled';
 
   logger.info('Workflow started', { callId, callTitle });
-  await stepWorkflowStarted(callTitle);
 
   // Step 1: Fetch transcript from Gong API
   const markdown = await stepGetGongTranscript(data);
@@ -49,23 +47,19 @@ export async function workflowGongSummary(data: GongWebhook) {
   }
 
   // Step 2: Run the AI agent to generate summary
-  // To add Salesforce CRM context, extract sfdcAccountId from data.callData.context and pass it: stepRunAgent({ webhookData: data, sfdcAccountId })
-  const agentOutput = await stepRunAgent({ webhookData: data });
+  const summary = await stepRunAgent({ webhookData: data });
 
   // Step 3: Emit the result to stream
-  await stepEmitResult(agentOutput);
+  await stepEmitResult(summary);
 
   // Step 4: Send to Slack (optional)
-  await stepSendSlackSummary(agentOutput, data.callData.metaData.url);
+  await stepSendSlackSummary(summary, data.callData.metaData.url);
 
-  logger.info('Workflow completed', { tasksCount: agentOutput.tasks.length });
-  await stepWorkflowComplete();
+  logger.info('Workflow completed', { summaryLength: summary.length });
 
   return {
     success: true,
-    summary: agentOutput.summary,
-    tasksCount: agentOutput.tasks.length,
-    objectionsCount: agentOutput.objections.length,
+    summary,
   };
 }
 

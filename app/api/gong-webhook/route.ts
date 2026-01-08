@@ -11,7 +11,7 @@ import { workflowGongSummary } from '@/workflows/gong-summary';
 import { createLogger } from '@/lib/logger';
 import { isDemoMode } from '@/lib/config';
 import { getMockWebhookData } from '@/lib/mock-data';
-import type { StreamLogEntry } from '@/workflows/gong-summary/steps';
+import type { StreamLogEntry } from '@/lib/agent';
 
 const logger = createLogger('gong-webhook');
 
@@ -25,16 +25,29 @@ async function getWebhookData(request: Request | null): Promise<GongWebhook> {
 }
 
 export async function POST(request: Request) {
+  logger.info('POST /api/gong-webhook called', {
+    url: request.url,
+    method: request.method,
+  });
+
   const acceptHeader = request.headers.get('Accept') || '';
   const wantsStream = acceptHeader.includes('text/event-stream');
+
+  logger.info('Request details', {
+    acceptHeader,
+    wantsStream,
+    demoMode: isDemoMode(),
+  });
 
   if (wantsStream) {
     const userAgent = request.headers.get('User-Agent') || '';
     const isCurl = userAgent.toLowerCase().includes('curl');
+    logger.info('Streaming mode', { userAgent, isCurl });
     return await streamWorkflow(isDemoMode() ? null : request, isCurl);
   }
 
   try {
+    logger.info('Non-streaming mode, getting webhook data...');
     const data = await getWebhookData(request);
 
     logger.info('Webhook received', {
@@ -46,15 +59,16 @@ export async function POST(request: Request) {
       isTest: data.isTest,
     });
 
-    await start(workflowGongSummary, [data]);
-    logger.info('Workflow triggered', { callId: data.callData.metaData.id });
+    logger.info('About to call start(workflowGongSummary)...');
+    const run = await start(workflowGongSummary, [data]);
+    logger.info('Workflow started', { callId: data.callData.metaData.id });
 
     return Response.json({
       message: 'Workflow triggered',
       callId: data.callData.metaData.id,
     });
   } catch (error) {
-    logger.error('Failed to process webhook', error);
+    logger.error('Failed to process webhook', { error: String(error), stack: (error as Error)?.stack });
     return Response.json(
       { error: 'Failed to process webhook', message: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }
@@ -64,12 +78,17 @@ export async function POST(request: Request) {
 
 async function streamWorkflow(request: Request | null, isCurl: boolean): Promise<Response> {
   const encoder = new TextEncoder();
+  logger.info('streamWorkflow called', { hasRequest: !!request, isCurl });
 
   try {
+    logger.info('Getting webhook data for stream...');
     const data = await getWebhookData(request);
+    logger.info('Got webhook data', { callId: data.callData.metaData.id });
 
     // Start workflow and get the readable stream
+    logger.info('Starting workflow for streaming...');
     const run = await start(workflowGongSummary, [data]);
+    logger.info('Workflow run created');
     const logsReadable = run.getReadable<StreamLogEntry>({ namespace: 'logs' });
 
     // Transform the workflow stream to SSE format
