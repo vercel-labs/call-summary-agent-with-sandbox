@@ -20,7 +20,8 @@ An AI-powered agent that automatically summarizes sales calls using Vercel's San
 ## One-Click Deploy (Demo Mode)
 
 You can deploy to Vercel and try it immediately with demo data with one click:
-[![Deploy with Vercel](https://vercel.com/button)]()
+
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?build-command=npm%20run%20build&demo-description=Build%20an%20AI%20agent%20to%20analyze%20sales%20call%20data%20using%20Vercel%20Sandbox%20and%20AI%20SDK.%20Features%20secure%20code%20execution%20and%20durable%20workflows.&demo-image=%2F%2Fimages.ctfassets.net%2Fe5382hct74si%2F2YZvDQ9gCIBnjtV7hSZq4s%2F2759b0c065ad8a0627b24468bc7753fe%2FImage.png&demo-title=Call%20Summary%20AI%20Agent&demo-url=https%3A%2F%2Fcall-summary-agent-demo.labs.vercel.dev%2F&from=templates&install-command=npm%20install&project-name=Call%20Summary%20AI%20Agent&project-names=Comma%20separated%20list%20of%20project%20names%2Cto%20match%20the%20root-directories&repository-name=call-summary-agent&repository-url=https%3A%2F%2Fgithub.com%2Fvercel-labs%2Fcall-summary-agent-with-sandbox&root-directories=List%20of%20directory%20paths%20for%20the%20directories%20to%20clone%20into%20projects&skippable-integrations=1&teamSlug=andrewqu)
 
 
 > Demo mode is **enabled by default** - no Gong credentials required to test!
