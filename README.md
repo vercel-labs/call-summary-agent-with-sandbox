@@ -34,7 +34,7 @@ You can deploy to Vercel and try it immediately with demo data with one click:
 ```bash
 git clone https://github.com/vercel-labs/call-summary-agent
 cd call-summary-agent
-npm install
+pnpm install
 ```
 
 ### 2. Link to Vercel (creates .env.local automatically)
@@ -44,16 +44,10 @@ vercel link
 vercel env pull
 ```
 
-Or manually create `.env.local`:
-
-```bash
-AI_GATEWAY_API_KEY=your_ai_gateway_api_key
-```
-
 ### 3. Run
 
 ```bash
-npm run dev
+pnpm dev
 ```
 
 ### 4. Test
@@ -80,17 +74,15 @@ Add these to your Vercel project settings or `.env.local`:
 
 | Variable | Required | Description |
 |----------|----------|-------------|
-| `AI_GATEWAY_API_KEY` | Yes | [Vercel AI Gateway](https://vercel.com/docs/ai-gateway) API key |
-| `USE_REAL_DATA` | Yes | Set to `true` to disable demo mode |
 | `GONG_ACCESS_KEY` | Yes | Your Gong API access key |
 | `GONG_SECRET_KEY` | Yes | Your Gong API secret key |
 
 ```bash
-AI_GATEWAY_API_KEY=your_ai_gateway_api_key
-USE_REAL_DATA=true
 GONG_ACCESS_KEY=your_gong_access_key
 GONG_SECRET_KEY=your_gong_secret_key
 ```
+
+> **Note:** Demo mode is automatically enabled when Gong credentials are missing.
 
 ### 2. Configure Gong Webhook
 
@@ -144,12 +136,9 @@ flowchart TD
 
 | Variable | Required | Default | Description |
 |----------|----------|---------|-------------|
-| `AI_GATEWAY_API_KEY` | Yes | - | Vercel AI Gateway API key |
-| `USE_REAL_DATA` | No | `false` | Set to `true` for production Gong API |
-| `GONG_ACCESS_KEY` | When `USE_REAL_DATA=true` | - | Gong API access key |
-| `GONG_SECRET_KEY` | When `USE_REAL_DATA=true` | - | Gong API secret key |
+| `GONG_ACCESS_KEY` | No | - | Gong API access key (demo mode if missing) |
+| `GONG_SECRET_KEY` | No | - | Gong API secret key (demo mode if missing) |
 | `COMPANY_NAME` | No | "Your Company" | Company name in prompts |
-| `AI_MODEL` | No | `anthropic/claude-sonnet-4` | AI model to use |
 | `SLACK_BOT_TOKEN` | No | - | Slack bot token for notifications |
 | `SLACK_CHANNEL_ID` | No | - | Slack channel ID for summaries |
 | `SF_CLIENT_ID` | No | - | Salesforce Connected App client ID |
@@ -357,13 +346,13 @@ Simply don't set the `SF_*` environment variables. The integration checks `isSal
 
 ```bash
 # Install dependencies
-npm install
+pnpm install
 
 # Run development server
-npm run dev
+pnpm dev
 
 # Build for production
-npm run build
+pnpm build
 ```
 
 ## Project Structure

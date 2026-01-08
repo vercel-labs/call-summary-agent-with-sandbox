@@ -1,41 +1,49 @@
 /**
- * Sandbox Agent Tools
- *
- * Uses bash-tool for AI agent shell command execution within the sandbox.
+ * Sandbox tools for the AI agent. Wraps bash-tool with logging hooks.
  */
 
 import { createBashTool } from 'bash-tool';
 import type { Sandbox } from '@vercel/sandbox';
+import type { LogFn } from './agent';
 
-export type LogEmitter = (
-  level: 'info' | 'warn' | 'error',
-  context: string,
-  message: string,
-  data?: Record<string, unknown>
-) => Promise<void>;
-
-/**
- * Create agent tools with bash-tool
- *
- * @param sandbox - The Vercel sandbox instance
- * @param files - Files to write to the sandbox (path -> content)
- * @param emit - Optional log emitter for streaming logs
- */
+/** Create agent tools with file upload and command logging */
 export async function createAgentTools(
   sandbox: Sandbox,
   files: Record<string, string>,
-  emit?: LogEmitter
+  log: LogFn
 ) {
+  const fileNames = Object.keys(files);
+  log('info', 'sandbox', `Uploading ${fileNames.length} files to sandbox...`);
+  for (const fileName of fileNames) {
+    log('info', 'sandbox', `  ↑ ${fileName}`);
+  }
+
   const { tools } = await createBashTool({
     sandbox,
     files,
     destination: '/vercel/sandbox',
     onBeforeBashCall: ({ command }) => {
-      if (emit) emit('info', 'bash', `$ ${command}`);
+      log('info', 'bash', `$ ${command}`);
       return undefined;
     },
-    onAfterBashCall: () => undefined,
+    onAfterBashCall: ({ result }) => {
+      const output = result.stdout || result.stderr;
+      if (output) {
+        const lines = output.trim().split('\n');
+        const maxLines = 8;
+        const preview = lines.slice(0, maxLines).join('\n');
+        const suffix = lines.length > maxLines ? `\n... (${lines.length - maxLines} more lines)` : '';
+        log('info', 'bash-output', preview + suffix);
+      }
+      if (result.exitCode !== 0) {
+        log('warn', 'bash', `Exit code: ${result.exitCode}`);
+      }
+      log('info', 'agent', 'Analyzing results...');
+      return undefined;
+    },
   });
+
+  log('info', 'sandbox', 'Sandbox ready');
 
   return tools;
 }

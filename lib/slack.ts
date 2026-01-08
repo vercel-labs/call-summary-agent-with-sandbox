@@ -39,7 +39,7 @@ export function isSlackEnabled(): boolean {
 /**
  * Send a message to a Slack channel
  */
-export async function sendSlackMessage(
+async function sendSlackMessage(
   channelId: string,
   message: string,
   options?: {
@@ -81,7 +81,7 @@ export async function sendSlackMessage(
 /**
  * Format agent output for Slack message
  */
-export function formatSlackMessage(output: AgentOutput): string {
+function formatSlackMessage(output: AgentOutput): string {
   let message = output.slackSummary;
 
   // Add objection summary if there are any
@@ -103,7 +103,7 @@ export function formatSlackMessage(output: AgentOutput): string {
 /**
  * Format detailed objections for Slack thread reply
  */
-export function formatObjectionsMessage(output: AgentOutput): string {
+function formatObjectionsMessage(output: AgentOutput): string {
   if (output.objections.length === 0) {
     return '';
   }
@@ -206,20 +206,4 @@ export async function sendSlackSummary(
   }
 
   return { success: true };
-}
-
-/**
- * Get Slack user ID by email
- */
-export async function getSlackUserIdByEmail(
-  email: string
-): Promise<string | null> {
-  try {
-    const client = getSlackClient();
-    const result = await client.users.lookupByEmail({ email });
-    return result.user?.id || null;
-  } catch (error) {
-    console.warn(`Could not find Slack user for email: ${email}`);
-    return null;
-  }
 }

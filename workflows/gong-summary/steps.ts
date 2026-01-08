@@ -2,64 +2,48 @@
  * Workflow Steps for Sales Call Summary
  *
  * Each step is marked with "use step" for durability and automatic retries.
- * Steps are the building blocks of workflows and should be idempotent.
  */
 
 import type { GongWebhook, GongWebhookData } from '@/lib/types';
 import type { AgentOutput } from '@/lib/config';
-import { config } from '@/lib/config';
-import {
-  fetchGongTranscript,
-  convertTranscriptToMarkdown,
-} from '@/lib/gong-client';
+import { isDemoMode } from '@/lib/config';
+import { fetchGongTranscript, convertTranscriptToMarkdown } from '@/lib/gong-client';
 import { getMockTranscript, getMockWebhookData } from '@/lib/mock-data';
-import { runGongAgent } from '@/lib/agent';
+import { runGongAgent, type StreamLogEntry } from '@/lib/agent';
 import { sendSlackSummary, isSlackEnabled } from '@/lib/slack';
 import { getWritable } from 'workflow';
 
-export type StreamLogEntry = {
-  time: string;
-  context: string;
-  level: 'info' | 'warn' | 'error';
-  message: string;
-  data?: Record<string, unknown>;
-};
+// Re-export for route.ts
+export type { StreamLogEntry };
 
-async function emitLog(
+/** Helper to write a single log entry */
+async function writeLog(
+  writer: WritableStreamDefaultWriter<StreamLogEntry>,
   level: StreamLogEntry['level'],
   context: string,
   message: string,
   data?: Record<string, unknown>
 ) {
-  const writable = getWritable<StreamLogEntry>({ namespace: 'logs' });
-  const writer = writable.getWriter();
-  await writer.write({
-    time: new Date().toISOString(),
-    context,
-    level,
-    message,
-    data,
-  });
-  writer.releaseLock();
+  await writer.write({ time: new Date().toISOString(), level, context, message, data });
 }
 
 /**
  * Step: Fetch and convert Gong transcript to markdown
  */
-export async function stepGetGongTranscript(
-  webhookData: GongWebhook
-): Promise<string | null> {
+export async function stepGetGongTranscript(webhookData: GongWebhook): Promise<string | null> {
   'use step';
+
+  const writer = getWritable<StreamLogEntry>({ namespace: 'logs' }).getWriter();
 
   try {
     const callId = webhookData.callData.metaData.id;
-    await emitLog('info', 'transcript', 'Fetching transcript', { callId });
+    await writeLog(writer, 'info', 'transcript', 'Fetching transcript', { callId });
 
     let apiResponse;
     let webhookForMarkdown: GongWebhook;
 
-    if (config.demo.enabled) {
-      await emitLog('info', 'transcript', 'Using mock transcript (demo mode)');
+    if (isDemoMode()) {
+      await writeLog(writer, 'info', 'transcript', 'Using mock transcript (demo mode)');
       apiResponse = getMockTranscript();
       webhookForMarkdown = { ...getMockWebhookData(), isTest: true, isPrivate: false };
     } else {
@@ -68,62 +52,82 @@ export async function stepGetGongTranscript(
     }
 
     const markdown = convertTranscriptToMarkdown(apiResponse, webhookForMarkdown);
-    await emitLog('info', 'transcript', 'Transcript ready', { length: markdown.length });
+    await writeLog(writer, 'info', 'transcript', 'Transcript ready', { length: markdown.length });
 
     return markdown;
   } catch (error) {
-    await emitLog('error', 'transcript', 'Failed to fetch transcript', { error: String(error) });
+    await writeLog(writer, 'error', 'transcript', 'Failed to fetch transcript', { error: String(error) });
     return null;
+  } finally {
+    writer.releaseLock();
   }
 }
 
 /**
  * Step: Run the AI agent to generate call summary
+ * To add Salesforce CRM context, add sfdcAccountId to options and pass to runGongAgent.
  */
 export async function stepRunAgent(options: {
   webhookData: GongWebhookData;
-  sfdcAccountId?: string;
 }): Promise<AgentOutput> {
   'use step';
 
-  const result = await runGongAgent(options.webhookData, options.sfdcAccountId, emitLog);
-
-  await emitLog('info', 'agent', 'Agent completed', {
-    tasks: result.tasks.length,
-    objections: result.objections.length,
-  });
-
-  return result;
+  const logStream = getWritable<StreamLogEntry>({ namespace: 'logs' });
+  return runGongAgent(options.webhookData, logStream);
 }
 
 /**
  * Step: Send summary to Slack (optional)
- *
- * This step sends the summary to the configured Slack channel.
- * Configure via SLACK_BOT_TOKEN and SLACK_CHANNEL_ID env vars.
- *
- * To extend for multiple channels:
- * - Add additional channel configuration
- * - Route based on call properties (e.g., account, team)
  */
-export async function stepSendSlackSummary(
-  output: AgentOutput,
-  recordingUrl?: string
-): Promise<void> {
+export async function stepSendSlackSummary(output: AgentOutput, recordingUrl?: string): Promise<void> {
   'use step';
 
-  if (!isSlackEnabled()) {
-    await emitLog('info', 'slack', 'Slack not configured, skipping');
-    return;
+  const writer = getWritable<StreamLogEntry>({ namespace: 'logs' }).getWriter();
+
+  try {
+    if (!isSlackEnabled()) {
+      await writeLog(writer, 'info', 'slack', 'Slack not configured, skipping');
+      return;
+    }
+
+    await writeLog(writer, 'info', 'slack', 'Sending to Slack');
+    const result = await sendSlackSummary(output, recordingUrl);
+
+    if (result.success) {
+      await writeLog(writer, 'info', 'slack', 'Sent to Slack');
+    } else {
+      await writeLog(writer, 'warn', 'slack', 'Failed to send to Slack', { error: result.error });
+    }
+  } finally {
+    writer.releaseLock();
   }
+}
 
-  await emitLog('info', 'slack', 'Sending to Slack');
-  const result = await sendSlackSummary(output, recordingUrl);
+/**
+ * Step: Emit workflow started log
+ */
+export async function stepWorkflowStarted(callTitle: string): Promise<void> {
+  'use step';
 
-  if (result.success) {
-    await emitLog('info', 'slack', 'Sent to Slack');
-  } else {
-    await emitLog('warn', 'slack', 'Failed to send to Slack', { error: result.error });
+  const writer = getWritable<StreamLogEntry>({ namespace: 'logs' }).getWriter();
+  try {
+    await writeLog(writer, 'info', 'workflow', `Workflow started: ${callTitle}`);
+  } finally {
+    writer.releaseLock();
+  }
+}
+
+/**
+ * Step: Emit workflow complete log
+ */
+export async function stepWorkflowComplete(): Promise<void> {
+  'use step';
+
+  const writer = getWritable<StreamLogEntry>({ namespace: 'logs' }).getWriter();
+  try {
+    await writeLog(writer, 'info', 'workflow', 'Workflow complete');
+  } finally {
+    writer.releaseLock();
   }
 }
 
@@ -133,22 +137,28 @@ export async function stepSendSlackSummary(
 export async function stepEmitResult(output: AgentOutput): Promise<void> {
   'use step';
 
-  await emitLog('info', 'result', '--- Generated Summary ---');
-  await emitLog('info', 'result', output.summary);
+  const writer = getWritable<StreamLogEntry>({ namespace: 'logs' }).getWriter();
 
-  if (output.tasks.length > 0) {
-    await emitLog('info', 'result', `Tasks (${output.tasks.length}):`);
-    for (const task of output.tasks) {
-      await emitLog('info', 'result', `  • ${task.taskDescription} [${task.taskOwner}]`);
+  try {
+    await writeLog(writer, 'info', 'result', '--- Generated Summary ---');
+    await writeLog(writer, 'info', 'result', output.summary);
+
+    if (output.tasks.length > 0) {
+      await writeLog(writer, 'info', 'result', `Tasks (${output.tasks.length}):`);
+      for (const task of output.tasks) {
+        await writeLog(writer, 'info', 'result', `  • ${task.taskDescription} [${task.taskOwner}]`);
+      }
     }
-  }
 
-  if (output.objections.length > 0) {
-    await emitLog('info', 'result', `Objections (${output.objections.length}):`);
-    for (const obj of output.objections) {
-      await emitLog('info', 'result', `  • ${obj.description} (${obj.speaker})`);
+    if (output.objections.length > 0) {
+      await writeLog(writer, 'info', 'result', `Objections (${output.objections.length}):`);
+      for (const obj of output.objections) {
+        await writeLog(writer, 'info', 'result', `  • ${obj.description} (${obj.speaker})`);
+      }
     }
-  }
 
-  await emitLog('info', 'result', '--- End Summary ---');
+    await writeLog(writer, 'info', 'result', 'Summary complete');
+  } finally {
+    writer.releaseLock();
+  }
 }
