@@ -18,6 +18,7 @@ import {
   stepGetGongTranscript,
   stepRunAgent,
   stepSendSlackSummary,
+  stepEmitResult,
 } from './steps';
 
 /**
@@ -51,7 +52,10 @@ export async function workflowGongSummary(data: GongWebhook) {
   // Step 2: Run the AI agent to generate summary
   const agentOutput = await stepRunAgent({ webhookData: data, sfdcAccountId });
 
-  // Step 3: Send to Slack (optional)
+  // Step 3: Emit the result to stream
+  await stepEmitResult(agentOutput);
+
+  // Step 4: Send to Slack (optional)
   await stepSendSlackSummary(agentOutput, data.callData.metaData.url);
 
   logger.info('Workflow completed', { tasksCount: agentOutput.tasks.length });

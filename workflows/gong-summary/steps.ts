@@ -126,3 +126,29 @@ export async function stepSendSlackSummary(
     await emitLog('warn', 'slack', 'Failed to send to Slack', { error: result.error });
   }
 }
+
+/**
+ * Step: Emit the final summary result
+ */
+export async function stepEmitResult(output: AgentOutput): Promise<void> {
+  'use step';
+
+  await emitLog('info', 'result', '--- Generated Summary ---');
+  await emitLog('info', 'result', output.summary);
+
+  if (output.tasks.length > 0) {
+    await emitLog('info', 'result', `Tasks (${output.tasks.length}):`);
+    for (const task of output.tasks) {
+      await emitLog('info', 'result', `  • ${task.taskDescription} [${task.taskOwner}]`);
+    }
+  }
+
+  if (output.objections.length > 0) {
+    await emitLog('info', 'result', `Objections (${output.objections.length}):`);
+    for (const obj of output.objections) {
+      await emitLog('info', 'result', `  • ${obj.description} (${obj.speaker})`);
+    }
+  }
+
+  await emitLog('info', 'result', '--- End Summary ---');
+}
