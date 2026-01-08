@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 type LogEntry = {
   time: string;
@@ -10,52 +10,36 @@ type LogEntry = {
   data?: Record<string, unknown>;
 };
 
-type DemoDisabledMessage = {
-  title: string;
-  instructions: string[];
-};
-
 export default function HomePage() {
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [isRunning, setIsRunning] = useState(false);
-  const [demoDisabledMessage, setDemoDisabledMessage] = useState<DemoDisabledMessage | null>(null);
+  const [isDemoMode, setIsDemoMode] = useState<boolean | null>(null);
+  const [callId, setCallId] = useState('');
 
-  const triggerDemo = async () => {
+  useEffect(() => {
+    fetch('/api/gong-webhook')
+      .then((res) => res.json())
+      .then((status) => setIsDemoMode(status.demoMode))
+      .catch(() => setIsDemoMode(true));
+  }, []);
+
+  const runWorkflow = async () => {
+    if (!isDemoMode && !callId.trim()) return;
+
     setLogs([]);
-    setDemoDisabledMessage(null);
     setIsRunning(true);
 
-    // First check if demo mode is enabled
-    try {
-      const statusRes = await fetch('/api/gong-webhook');
-      const status = await statusRes.json();
-      if (!status.demoMode) {
-        setDemoDisabledMessage({
-          title: 'Demo mode is not enabled',
-          instructions: [
-            '1. Set DEMO_MODE=true in your .env file',
-            '2. Redeploy the application',
-          ],
-        });
-        setIsRunning(false);
-        return;
-      }
-    } catch {
-      // Continue if status check fails
-    }
-
-    const timeout = setTimeout(() => {
-      setIsRunning(false);
-    }, 120000); // 2 min fallback timeout
+    const timeout = setTimeout(() => setIsRunning(false), 120000);
 
     try {
+      const body = isDemoMode
+        ? {}
+        : { callData: { metaData: { id: callId.trim(), title: 'Test Call' } } };
+
       const res = await fetch('/api/gong-webhook', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Accept: 'text/event-stream',
-        },
-        body: JSON.stringify({}),
+        headers: { 'Content-Type': 'application/json', Accept: 'text/event-stream' },
+        body: JSON.stringify(body),
       });
 
       const reader = res.body?.getReader();
@@ -69,10 +53,7 @@ export default function HomePage() {
 
       while (true) {
         const { done, value } = await reader.read();
-
-        if (value) {
-          buffer += decoder.decode(value, { stream: true });
-        }
+        if (value) buffer += decoder.decode(value, { stream: true });
 
         const lines = buffer.split('\n\n');
         buffer = lines.pop() || '';
@@ -103,9 +84,7 @@ export default function HomePage() {
     }
   };
 
-  const formatTime = (iso: string) => {
-    return new Date(iso).toLocaleTimeString('en-US', { hour12: false });
-  };
+  const formatTime = (iso: string) => new Date(iso).toLocaleTimeString('en-US', { hour12: false });
 
   const levelColor = (level: string) => {
     switch (level) {
@@ -133,23 +112,58 @@ export default function HomePage() {
         </a>
       </p>
 
-      <button
-        onClick={triggerDemo}
-        disabled={isRunning}
-        style={{
-          backgroundColor: isRunning ? '#ccc' : '#000',
-          color: '#fff',
-          border: 'none',
-          borderRadius: '8px',
-          padding: '12px 24px',
-          fontSize: '1rem',
-          fontWeight: 500,
-          cursor: isRunning ? 'not-allowed' : 'pointer',
-          marginBottom: '24px',
-        }}
-      >
-        {isRunning ? 'Running...' : 'Test with mocked data'}
-      </button>
+      {isDemoMode === false ? (
+        <div style={{ display: 'flex', gap: '8px', marginBottom: '24px' }}>
+          <input
+            type="text"
+            placeholder="Enter Gong Call ID"
+            value={callId}
+            onChange={(e) => setCallId(e.target.value)}
+            disabled={isRunning}
+            style={{
+              padding: '12px 16px',
+              fontSize: '1rem',
+              borderRadius: '8px',
+              border: '1px solid #ccc',
+              width: '240px',
+            }}
+          />
+          <button
+            onClick={runWorkflow}
+            disabled={isRunning || !callId.trim()}
+            style={{
+              backgroundColor: isRunning || !callId.trim() ? '#ccc' : '#000',
+              color: '#fff',
+              border: 'none',
+              borderRadius: '8px',
+              padding: '12px 24px',
+              fontSize: '1rem',
+              fontWeight: 500,
+              cursor: isRunning || !callId.trim() ? 'not-allowed' : 'pointer',
+            }}
+          >
+            {isRunning ? 'Running...' : 'Run'}
+          </button>
+        </div>
+      ) : (
+        <button
+          onClick={runWorkflow}
+          disabled={isRunning || isDemoMode === null}
+          style={{
+            backgroundColor: isRunning ? '#ccc' : '#000',
+            color: '#fff',
+            border: 'none',
+            borderRadius: '8px',
+            padding: '12px 24px',
+            fontSize: '1rem',
+            fontWeight: 500,
+            cursor: isRunning ? 'not-allowed' : 'pointer',
+            marginBottom: '24px',
+          }}
+        >
+          {isRunning ? 'Running...' : 'Test with mocked data'}
+        </button>
+      )}
 
       <div
         style={{
@@ -165,20 +179,11 @@ export default function HomePage() {
           fontSize: '0.85rem',
         }}
       >
-        {demoDisabledMessage ? (
-          <div style={{ color: '#f59e0b', textAlign: 'center', paddingTop: '80px' }}>
-            <div style={{ fontSize: '1.1rem', fontWeight: 600, marginBottom: '16px' }}>
-              {demoDisabledMessage.title}
-            </div>
-            <div style={{ color: '#888', textAlign: 'left', maxWidth: '400px', margin: '0 auto' }}>
-              {demoDisabledMessage.instructions.map((instruction, i) => (
-                <div key={i} style={{ marginBottom: '8px' }}>{instruction}</div>
-              ))}
-            </div>
-          </div>
-        ) : logs.length === 0 ? (
+        {logs.length === 0 ? (
           <div style={{ color: '#666', textAlign: 'center', paddingTop: '100px' }}>
-            Click &quot;Test with mocked data&quot; to see logs stream here
+            {isDemoMode === false
+              ? 'Enter a Gong Call ID and click "Run" to see logs stream here'
+              : 'Click "Test with mocked data" to see logs stream here'}
           </div>
         ) : (
           logs.map((log, i) => (
