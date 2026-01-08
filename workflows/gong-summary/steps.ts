@@ -2,64 +2,44 @@
  * Workflow Steps for Sales Call Summary
  *
  * Each step is marked with "use step" for durability and automatic retries.
- * Steps are the building blocks of workflows and should be idempotent.
  */
 
 import type { GongWebhook, GongWebhookData } from '@/lib/types';
-import type { AgentOutput } from '@/lib/config';
-import { config } from '@/lib/config';
-import {
-  fetchGongTranscript,
-  convertTranscriptToMarkdown,
-} from '@/lib/gong-client';
+import { isDemoMode } from '@/lib/config';
+import { fetchGongTranscript, convertTranscriptToMarkdown } from '@/lib/gong-client';
 import { getMockTranscript, getMockWebhookData } from '@/lib/mock-data';
-import { runGongAgent } from '@/lib/agent';
+import { runGongAgent, type StreamLogEntry } from '@/lib/agent';
 import { sendSlackSummary, isSlackEnabled } from '@/lib/slack';
 import { getWritable } from 'workflow';
 
-export type StreamLogEntry = {
-  time: string;
-  context: string;
-  level: 'info' | 'warn' | 'error';
-  message: string;
-  data?: Record<string, unknown>;
-};
-
-async function emitLog(
+/** Helper to write a single log entry */
+async function writeLog(
+  writer: WritableStreamDefaultWriter<StreamLogEntry>,
   level: StreamLogEntry['level'],
   context: string,
   message: string,
   data?: Record<string, unknown>
 ) {
-  const writable = getWritable<StreamLogEntry>({ namespace: 'logs' });
-  const writer = writable.getWriter();
-  await writer.write({
-    time: new Date().toISOString(),
-    context,
-    level,
-    message,
-    data,
-  });
-  writer.releaseLock();
+  await writer.write({ time: new Date().toISOString(), level, context, message, data });
 }
 
 /**
  * Step: Fetch and convert Gong transcript to markdown
  */
-export async function stepGetGongTranscript(
-  webhookData: GongWebhook
-): Promise<string | null> {
+export async function stepGetGongTranscript(webhookData: GongWebhook): Promise<string | null> {
   'use step';
+
+  const writer = getWritable<StreamLogEntry>({ namespace: 'logs' }).getWriter();
 
   try {
     const callId = webhookData.callData.metaData.id;
-    await emitLog('info', 'transcript', 'Fetching transcript', { callId });
+    await writeLog(writer, 'info', 'transcript', 'Fetching transcript', { callId });
 
     let apiResponse;
     let webhookForMarkdown: GongWebhook;
 
-    if (config.demo.enabled) {
-      await emitLog('info', 'transcript', 'Using mock transcript (demo mode)');
+    if (isDemoMode()) {
+      await writeLog(writer, 'info', 'transcript', 'Using mock transcript (demo mode)');
       apiResponse = getMockTranscript();
       webhookForMarkdown = { ...getMockWebhookData(), isTest: true, isPrivate: false };
     } else {
@@ -68,87 +48,70 @@ export async function stepGetGongTranscript(
     }
 
     const markdown = convertTranscriptToMarkdown(apiResponse, webhookForMarkdown);
-    await emitLog('info', 'transcript', 'Transcript ready', { length: markdown.length });
+    await writeLog(writer, 'info', 'transcript', 'Transcript ready', { length: markdown.length });
 
     return markdown;
   } catch (error) {
-    await emitLog('error', 'transcript', 'Failed to fetch transcript', { error: String(error) });
+    await writeLog(writer, 'error', 'transcript', 'Failed to fetch transcript', { error: String(error) });
     return null;
+  } finally {
+    writer.releaseLock();
   }
 }
 
 /**
  * Step: Run the AI agent to generate call summary
+ * Returns the agent's text response as a string.
  */
 export async function stepRunAgent(options: {
   webhookData: GongWebhookData;
-  sfdcAccountId?: string;
-}): Promise<AgentOutput> {
+}): Promise<string> {
   'use step';
 
-  const result = await runGongAgent(options.webhookData, options.sfdcAccountId, emitLog);
-
-  await emitLog('info', 'agent', 'Agent completed', {
-    tasks: result.tasks.length,
-    objections: result.objections.length,
-  });
-
-  return result;
+  const logStream = getWritable<StreamLogEntry>({ namespace: 'logs' });
+  return runGongAgent(options.webhookData, logStream);
 }
 
 /**
  * Step: Send summary to Slack (optional)
- *
- * This step sends the summary to the configured Slack channel.
- * Configure via SLACK_BOT_TOKEN and SLACK_CHANNEL_ID env vars.
- *
- * To extend for multiple channels:
- * - Add additional channel configuration
- * - Route based on call properties (e.g., account, team)
  */
-export async function stepSendSlackSummary(
-  output: AgentOutput,
-  recordingUrl?: string
-): Promise<void> {
+export async function stepSendSlackSummary(summary: string, recordingUrl?: string): Promise<void> {
   'use step';
 
-  if (!isSlackEnabled()) {
-    await emitLog('info', 'slack', 'Slack not configured, skipping');
-    return;
-  }
+  const writer = getWritable<StreamLogEntry>({ namespace: 'logs' }).getWriter();
 
-  await emitLog('info', 'slack', 'Sending to Slack');
-  const result = await sendSlackSummary(output, recordingUrl);
+  try {
+    if (!isSlackEnabled()) {
+      await writeLog(writer, 'info', 'slack', 'Slack not configured, skipping');
+      return;
+    }
 
-  if (result.success) {
-    await emitLog('info', 'slack', 'Sent to Slack');
-  } else {
-    await emitLog('warn', 'slack', 'Failed to send to Slack', { error: result.error });
+    await writeLog(writer, 'info', 'slack', 'Sending to Slack');
+    const result = await sendSlackSummary(summary, recordingUrl);
+
+    if (result.success) {
+      await writeLog(writer, 'info', 'slack', 'Sent to Slack');
+    } else {
+      await writeLog(writer, 'warn', 'slack', 'Failed to send to Slack', { error: result.error });
+    }
+  } finally {
+    writer.releaseLock();
   }
 }
+
 
 /**
  * Step: Emit the final summary result
  */
-export async function stepEmitResult(output: AgentOutput): Promise<void> {
+export async function stepEmitResult(summary: string): Promise<void> {
   'use step';
 
-  await emitLog('info', 'result', '--- Generated Summary ---');
-  await emitLog('info', 'result', output.summary);
+  const writer = getWritable<StreamLogEntry>({ namespace: 'logs' }).getWriter();
 
-  if (output.tasks.length > 0) {
-    await emitLog('info', 'result', `Tasks (${output.tasks.length}):`);
-    for (const task of output.tasks) {
-      await emitLog('info', 'result', `  • ${task.taskDescription} [${task.taskOwner}]`);
-    }
+  try {
+    await writeLog(writer, 'info', 'result', '--- Generated Summary ---');
+    await writeLog(writer, 'info', 'result', summary);
+  } finally {
+    writer.releaseLock();
   }
-
-  if (output.objections.length > 0) {
-    await emitLog('info', 'result', `Objections (${output.objections.length}):`);
-    for (const obj of output.objections) {
-      await emitLog('info', 'result', `  • ${obj.description} (${obj.speaker})`);
-    }
-  }
-
-  await emitLog('info', 'result', '--- End Summary ---');
 }

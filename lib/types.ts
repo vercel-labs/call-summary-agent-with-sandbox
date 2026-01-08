@@ -1,40 +1,28 @@
 /**
- * Gong Webhook and Call Types
+ * Type definitions for Gong integration.
  *
- * These types define the structure of data received from Gong webhooks
- * and the format of call transcripts.
+ * Two main type families:
+ * - Webhook types: Data received from Gong webhooks (GongWebhook, CallData, etc.)
+ * - API types: Data from Gong REST API calls (GongCall, GongApiResponse, etc.)
  */
 
-export type ISODateString = string; // e.g., "2025-10-03T12:00:18-07:00"
-export type URLString = string;
-export type FieldValue =
-  | string
-  | number
-  | boolean
-  | null
-  | number[]
-  | string[]
-  | Record<string, unknown>;
+// ============================================================================
+// WEBHOOK TYPES - Data received from Gong webhooks
+// ============================================================================
 
-/**
- * Main webhook payload from Gong
- */
+/** Main webhook payload from Gong */
 export interface GongWebhook {
   callData: CallData;
   isTest: boolean;
   isPrivate: boolean;
 }
 
-/**
- * Simplified webhook data structure
- */
+/** Simplified webhook data (without test/private flags) */
 export interface GongWebhookData {
   callData: CallData;
 }
 
-/**
- * Call data containing metadata, participants, and content
- */
+/** Call data containing metadata, participants, and content */
 export interface CallData {
   metaData: MetaData;
   context?: CallContextEntry[];
@@ -44,124 +32,94 @@ export interface CallData {
   collaboration?: Record<string, unknown>;
 }
 
-/**
- * Call metadata
- */
+/** Call metadata */
 export interface MetaData {
   id: string;
-  url: URLString;
+  url: string;
   title?: string | null;
-  scheduled?: ISODateString | null;
-  started?: ISODateString | null;
-  duration?: number | null; // seconds
+  scheduled?: string | null;
+  started?: string | null;
+  duration?: number | null;
   primaryUserId?: string | null;
-  direction?: string | null; // e.g., "Conference"
-  system?: string | null; // e.g., "Zoom"
-  scope?: string | null; // e.g., "External"
-  media?: string | null; // e.g., "Video"
-  language?: string | null; // e.g., "eng"
+  direction?: string | null;
+  system?: string | null;
+  scope?: string | null;
+  media?: string | null;
+  language?: string | null;
   workspaceId?: string | null;
   sdrDisposition?: string | null;
   clientUniqueId?: string | null;
   customData?: unknown | null;
   purpose?: string | null;
-  meetingUrl?: URLString | null;
+  meetingUrl?: string | null;
   isPrivate?: boolean | null;
   calendarEventId?: string | null;
 }
 
-/**
- * CRM context entry (e.g., Salesforce)
- */
+/** CRM context entry (e.g., Salesforce) */
 export interface CallContextEntry {
-  system: string; // e.g., "Salesforce"
+  system: string;
   objects?: CallContextObject[];
 }
 
 export interface CallContextObject {
-  objectType: string; // e.g., "Account", "Opportunity", "User", "Contact"
+  objectType: string;
   objectId?: string;
-  fields?: ContextField[];
+  fields?: Array<{ name: string; value: unknown }>;
   timing?: string;
 }
 
-export interface ContextField {
-  name: string;
-  value: FieldValue;
-}
-
-/**
- * Affiliation type for call participants
- */
-export type Affiliation = 'Internal' | 'External' | (string & {});
-
-/**
- * A person or participant on the call (internal or external)
- */
+/** Call participant */
 export interface Party {
   id: string;
   emailAddress?: string | null;
   name?: string | null;
   title?: string | null;
-  userId?: string | null; // present for internal users
+  userId?: string | null;
   speakerId?: string | null;
   context?: CallContextEntry[];
-  affiliation?: Affiliation;
+  affiliation?: 'Internal' | 'External' | string;
   phoneNumber?: string | null;
-  methods?: string[]; // e.g., ["Invitee","Attendee"]
+  methods?: string[];
 }
 
-/**
- * Call content including trackers and topics
- */
+/** Call content (trackers, topics) */
 export interface Content {
   trackers?: Tracker[];
   topics?: Topic[];
   scorecardsAnswers?: unknown[];
 }
 
-export type TrackerType = 'KEYWORD' | 'SMART' | (string & {});
-
 export interface Tracker {
   id: string;
   name: string;
   count: number;
-  type: TrackerType;
+  type: 'KEYWORD' | 'SMART' | string;
 }
 
 export interface Topic {
-  name: string; // e.g., "Pricing"
-  duration: number; // seconds
+  name: string;
+  duration: number;
 }
 
-/**
- * Interaction statistics
- */
+/** Interaction statistics */
 export interface Interaction {
   speakers?: Speaker[];
-  interactionStats?: InteractionStat[];
-  video?: VideoSegment[];
+  interactionStats?: Array<{ name: string; value: number }>;
+  video?: Array<{ name: string; duration: number }>;
 }
 
 export interface Speaker {
   id: string;
-  userId?: string | null; // only for internal speakers
-  talkTime: number; // seconds
+  userId?: string | null;
+  talkTime: number;
 }
 
-export interface InteractionStat {
-  name: string; // e.g., "Talk Ratio"
-  value: number;
-}
+// ============================================================================
+// API TYPES - Data from Gong REST API responses
+// ============================================================================
 
-export interface VideoSegment {
-  name: string; // e.g., "Webcam", "Presentation"
-  duration: number; // seconds (can be fractional)
-}
-
-/**
- * Gong API response for transcript requests
- */
+/** Gong transcript API response */
 export interface GongApiResponse {
   callTranscripts: Array<{
     callId: string;
@@ -178,165 +136,3 @@ export interface TranscriptSegment {
     text: string;
   }>;
 }
-
-/**
- * Extended Gong call type with full details
- */
-export interface GongCall {
-  metaData: {
-    id: string;
-    url: string;
-    title: string;
-    scheduled: number;
-    started: number;
-    duration: number;
-    primaryUserId?: string;
-    direction?: string;
-    system?: string;
-    scope?: string;
-    media?: string;
-    language?: string;
-    workspaceId?: string;
-    sdrDisposition?: string;
-    clientUniqueId?: string;
-    customData?: string;
-    purpose?: string;
-    meetingUrl?: string;
-    isPrivate?: boolean;
-    calendarEventId?: string;
-  };
-  context?: Array<{
-    system: string;
-    objects: Array<{
-      objectType: string;
-      objectId: string;
-      fields?: Array<{
-        name: string;
-        value: string;
-      }>;
-      timing?: string;
-    }>;
-  }>;
-  parties?: GongParty[];
-  content?: {
-    structure?: Array<{
-      name: string;
-      duration: number;
-    }>;
-    topics?: GongTopic[];
-    trackers?: Array<{
-      id: string;
-      name: string;
-      count: number;
-      type: string;
-      occurrences?: Array<{
-        startTime: number;
-        speakerId: string;
-      }>;
-      phrases?: Array<{
-        count: number;
-        phrase: string;
-        occurrences?: Array<{
-          startTime: number;
-          speakerId: string;
-        }>;
-      }>;
-    }>;
-    brief?: string;
-    outline?: Array<{
-      section: string;
-      startTime: number;
-      duration: number;
-      items?: Array<{
-        text: string;
-        startTime: number;
-      }>;
-    }>;
-    highlights?: Array<{
-      title: string;
-      items?: Array<{
-        text: string;
-        startTimes?: number[];
-      }>;
-    }>;
-    callOutcome?: {
-      id: string;
-      category: string;
-      name: string;
-    };
-    keyPoints?: Array<{
-      text: string;
-    }>;
-  };
-  interaction?: {
-    speakers?: Array<{
-      id: string;
-      userId?: string;
-      talkTime: number;
-    }>;
-    interactionStats?: Array<{
-      name: string;
-      value: number;
-    }>;
-    video?: Array<{
-      name: string;
-      duration: number;
-    }>;
-    questions?: {
-      companyCount: number;
-      nonCompanyCount: number;
-    };
-  };
-  collaboration?: {
-    publicComments?: Array<{
-      id: string;
-      audioStartTime: number;
-      audioEndTime: number;
-      commenterUserId: string;
-      comment: string;
-      posted: number;
-      inReplyTo?: string;
-      duringCall: boolean;
-    }>;
-  };
-  media?: {
-    audioUrl?: string;
-    videoUrl?: string;
-  };
-}
-
-export interface GongTopic {
-  name: string;
-  duration: number;
-  order?: number;
-}
-
-export interface GongParty {
-  id: string;
-  emailAddress: string;
-  name: string;
-  title?: string;
-  userId?: string;
-  speakerId?: string;
-  context?: Array<{
-    system: string;
-    objects: Array<{
-      objectType: string;
-      objectId: string;
-      fields?: Array<{
-        name: string;
-        value: string;
-      }>;
-      timing?: string;
-    }>;
-  }>;
-  affiliation: 'Internal' | 'External' | 'Unknown';
-  phoneNumber?: string;
-  methods?: string[];
-}
-
-export interface GongCallFile {
-  filename: string;
-  markdown: string;
-}
-

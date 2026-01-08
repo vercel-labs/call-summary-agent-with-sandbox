@@ -1,46 +1,54 @@
 /**
  * Gong Webhook API Route
+ *
+ * Handles incoming Gong webhooks and triggers the call summary workflow.
+ * Supports both regular responses and SSE streaming for real-time logs.
  */
 
 import { start } from 'workflow/api';
 import type { GongWebhook } from '@/lib/types';
 import { workflowGongSummary } from '@/workflows/gong-summary';
 import { createLogger } from '@/lib/logger';
-import { validateConfig, config } from '@/lib/config';
+import { isDemoMode } from '@/lib/config';
 import { getMockWebhookData } from '@/lib/mock-data';
-import type { StreamLogEntry } from '@/workflows/gong-summary/steps';
+import type { StreamLogEntry } from '@/lib/agent';
 
 const logger = createLogger('gong-webhook');
 
+/** Prepare webhook data - uses mock data in demo mode */
+async function getWebhookData(request: Request | null): Promise<GongWebhook> {
+  if (isDemoMode()) {
+    logger.info('Demo mode: using mock webhook data');
+    return { ...getMockWebhookData(), isTest: true, isPrivate: false };
+  }
+  return (await request!.json()) as GongWebhook;
+}
+
 export async function POST(request: Request) {
+  logger.info('POST /api/gong-webhook called', {
+    url: request.url,
+    method: request.method,
+  });
+
   const acceptHeader = request.headers.get('Accept') || '';
   const wantsStream = acceptHeader.includes('text/event-stream');
 
-  const configValidation = validateConfig();
-  if (!configValidation.valid) {
-    logger.error('Configuration invalid', { errors: configValidation.errors });
-    return Response.json(
-      { error: 'Configuration error', details: configValidation.errors },
-      { status: 500 }
-    );
-  }
+  logger.info('Request details', {
+    acceptHeader,
+    wantsStream,
+    demoMode: isDemoMode(),
+  });
 
-  // For streaming, use workflow's built-in streaming
   if (wantsStream) {
     const userAgent = request.headers.get('User-Agent') || '';
     const isCurl = userAgent.toLowerCase().includes('curl');
-    return await streamWorkflow(config.demo.enabled ? null : request, isCurl);
+    logger.info('Streaming mode', { userAgent, isCurl });
+    return await streamWorkflow(isDemoMode() ? null : request, isCurl);
   }
 
   try {
-    let data: GongWebhook;
-    if (config.demo.enabled) {
-      const mockData = getMockWebhookData();
-      data = { ...mockData, isTest: true, isPrivate: false };
-      logger.info('Demo mode: using mock webhook data');
-    } else {
-      data = (await request.json()) as GongWebhook;
-    }
+    logger.info('Non-streaming mode, getting webhook data...');
+    const data = await getWebhookData(request);
 
     logger.info('Webhook received', {
       callId: data.callData.metaData.id,
@@ -51,15 +59,16 @@ export async function POST(request: Request) {
       isTest: data.isTest,
     });
 
-    await start(workflowGongSummary, [data]);
-    logger.info('Workflow triggered', { callId: data.callData.metaData.id });
+    logger.info('About to call start(workflowGongSummary)...');
+    const run = await start(workflowGongSummary, [data]);
+    logger.info('Workflow started', { callId: data.callData.metaData.id });
 
     return Response.json({
       message: 'Workflow triggered',
       callId: data.callData.metaData.id,
     });
   } catch (error) {
-    logger.error('Failed to process webhook', error);
+    logger.error('Failed to process webhook', { error: String(error), stack: (error as Error)?.stack });
     return Response.json(
       { error: 'Failed to process webhook', message: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }
@@ -69,20 +78,17 @@ export async function POST(request: Request) {
 
 async function streamWorkflow(request: Request | null, isCurl: boolean): Promise<Response> {
   const encoder = new TextEncoder();
+  logger.info('streamWorkflow called', { hasRequest: !!request, isCurl });
 
   try {
-    // Prepare webhook data
-    let data: GongWebhook;
-    if (config.demo.enabled) {
-      const mockData = getMockWebhookData();
-      data = { ...mockData, isTest: true, isPrivate: false };
-      logger.info('Demo mode: using mock webhook data');
-    } else {
-      data = (await request!.json()) as GongWebhook;
-    }
+    logger.info('Getting webhook data for stream...');
+    const data = await getWebhookData(request);
+    logger.info('Got webhook data', { callId: data.callData.metaData.id });
 
     // Start workflow and get the readable stream
+    logger.info('Starting workflow for streaming...');
     const run = await start(workflowGongSummary, [data]);
+    logger.info('Workflow run created');
     const logsReadable = run.getReadable<StreamLogEntry>({ namespace: 'logs' });
 
     // Transform the workflow stream to SSE format
@@ -144,17 +150,11 @@ async function streamWorkflow(request: Request | null, isCurl: boolean): Promise
   }
 }
 
-/**
- * GET handler for health check
- */
+/** Health check endpoint */
 export async function GET() {
-  const configValidation = validateConfig();
-
   return Response.json({
     status: 'ok',
     service: 'sales-call-summary-agent',
-    demoMode: config.demo.enabled,
-    configValid: configValidation.valid,
-    configErrors: configValidation.errors,
+    mode: isDemoMode() ? 'demo' : 'live',
   });
 }

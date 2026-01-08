@@ -37,7 +37,7 @@ export function isSalesforceEnabled(): boolean {
 /**
  * Builds a short-lived JWT assertion and exchanges it for an access token
  */
-export async function getSalesforceAccessToken(): Promise<{
+async function getSalesforceAccessToken(): Promise<{
   accessToken: string;
   instanceUrl: string;
 }> {
@@ -84,7 +84,7 @@ export async function getSalesforceAccessToken(): Promise<{
 /**
  * Query Salesforce using SOQL
  */
-export async function querySalesforce<T = Record<string, unknown>>({
+async function querySalesforce<T = Record<string, unknown>>({
   query,
   instanceUrl,
   accessToken,

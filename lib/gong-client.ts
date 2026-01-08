@@ -1,18 +1,15 @@
+/**
+ * Gong API client for fetching call transcripts and details.
+ */
+
 import { config } from './config';
-import type {
-  GongApiResponse,
-  GongWebhookData,
-  GongCall,
-  GongCallFile,
-  Party,
-} from './types';
-import slugify from 'slugify';
+import type { GongApiResponse, GongWebhookData, Party } from './types';
 
 /**
  * Create authorization headers for Gong API requests.
  * Gong uses Basic Auth with access-key:access-secret format.
  */
-export function createGongHeaders(): HeadersInit {
+function createGongHeaders(): HeadersInit {
   const { accessKey, secretKey } = config.gong;
 
   if (!accessKey || !secretKey) {
@@ -49,138 +46,6 @@ export async function fetchGongTranscript(
   }
 
   return response.json();
-}
-
-/**
- * Fetch transcripts for multiple calls from Gong API
- */
-export async function fetchGongTranscripts(
-  callIds: string[]
-): Promise<Map<string, GongApiResponse['callTranscripts'][number]>> {
-  const results = new Map<
-    string,
-    GongApiResponse['callTranscripts'][number]
-  >();
-
-  if (callIds.length === 0) return results;
-
-  // Process in batches of 5 to avoid rate limits
-  const batchSize = 5;
-  for (let i = 0; i < callIds.length; i += batchSize) {
-    const batch = callIds.slice(i, i + batchSize);
-
-    try {
-      const url = `${config.gong.baseUrl}/v2/calls/transcript`;
-      const response = await fetch(url, {
-        method: 'POST',
-        headers: createGongHeaders(),
-        body: JSON.stringify({
-          filter: { callIds: batch },
-        }),
-      });
-
-      if (!response.ok) {
-        console.error(`Gong API error fetching transcripts: ${response.status}`);
-        continue;
-      }
-
-      const data = (await response.json()) as GongApiResponse;
-      for (const transcript of data.callTranscripts || []) {
-        results.set(transcript.callId, transcript);
-      }
-    } catch (error) {
-      console.error('Error fetching Gong transcripts:', error);
-    }
-  }
-
-  return results;
-}
-
-/**
- * Fetch detailed call information from Gong API
- */
-export async function fetchGongCallDetails(
-  callIds: string[]
-): Promise<Map<string, GongCall>> {
-  const results = new Map<string, GongCall>();
-
-  if (callIds.length === 0) return results;
-
-  // Process in batches of 5 to avoid rate limits
-  const batchSize = 5;
-  for (let i = 0; i < callIds.length; i += batchSize) {
-    const batch = callIds.slice(i, i + batchSize);
-
-    try {
-      const url = `${config.gong.baseUrl}/v2/calls/extensive`;
-      const response = await fetch(url, {
-        method: 'POST',
-        headers: createGongHeaders(),
-        body: JSON.stringify({
-          filter: { callIds: batch },
-          contentSelector: {
-            context: 'Extended',
-            exposedFields: {
-              parties: true,
-            },
-          },
-        }),
-      });
-
-      if (!response.ok) {
-        console.error(`Gong API error fetching call details: ${response.status}`);
-        continue;
-      }
-
-      const data = (await response.json()) as { calls: GongCall[] };
-      for (const call of data.calls || []) {
-        results.set(call.metaData.id, call);
-      }
-    } catch (error) {
-      console.error('Error fetching Gong call details:', error);
-    }
-  }
-
-  return results;
-}
-
-/**
- * Fetch recent calls for an account from Gong API.
- *
- * NOTE: This fetches calls directly from Gong API. For historical call analysis
- * with better performance, you may want to integrate with a database like
- * Snowflake, PostgreSQL, or another data warehouse to store call history.
- */
-export async function fetchRecentCalls(options: {
-  fromDateTime?: string;
-  toDateTime?: string;
-  limit?: number;
-}): Promise<GongCall[]> {
-  const url = `${config.gong.baseUrl}/v2/calls`;
-
-  const response = await fetch(url, {
-    method: 'POST',
-    headers: createGongHeaders(),
-    body: JSON.stringify({
-      filter: {
-        fromDateTime: options.fromDateTime,
-        toDateTime: options.toDateTime,
-      },
-      contentSelector: {
-        context: 'Extended',
-        exposedFields: {
-          parties: true,
-        },
-      },
-    }),
-  });
-
-  if (!response.ok) {
-    throw new Error(`Failed to fetch Gong calls: ${response.statusText}`);
-  }
-
-  const data = (await response.json()) as { calls: GongCall[] };
-  return data.calls?.slice(0, options.limit) || [];
 }
 
 /**
@@ -264,83 +129,6 @@ export function convertTranscriptToMarkdown(
   }
 
   return markdown;
-}
-
-/**
- * Generate markdown files for all calls, suitable for sandbox context
- */
-export async function generateCallFiles(
-  callIds: string[]
-): Promise<GongCallFile[]> {
-  const callDetails = await fetchGongCallDetails(callIds);
-  const transcripts = await fetchGongTranscripts(callIds);
-
-  const gongCallFiles: GongCallFile[] = [];
-
-  for (const callId of callIds) {
-    const details = callDetails.get(callId);
-    const transcript = transcripts.get(callId);
-
-    if (!details && !transcript) {
-      console.log(`Skipping call ${callId} - no data from Gong API`);
-      continue;
-    }
-
-    const webhookData: GongWebhookData = {
-      callData: {
-        metaData: {
-          id: callId,
-          url: details?.metaData?.url || '',
-          title: details?.metaData?.title || null,
-          scheduled: details?.metaData?.scheduled
-            ? new Date(details.metaData.scheduled).toISOString()
-            : null,
-          started: details?.metaData?.started
-            ? new Date(details.metaData.started).toISOString()
-            : null,
-          duration: details?.metaData?.duration || null,
-          system: details?.metaData?.system || null,
-          meetingUrl: details?.metaData?.meetingUrl || null,
-        },
-        parties: details?.parties?.map((p) => ({
-          id: p.id,
-          emailAddress: p.emailAddress || null,
-          name: p.name || null,
-          title: p.title || null,
-          userId: p.userId || null,
-          speakerId: p.speakerId || null,
-          affiliation: p.affiliation,
-        })),
-        context: details?.context,
-      },
-    };
-
-    const apiResponse: GongApiResponse = {
-      callTranscripts: transcript
-        ? [{ callId, transcript: transcript.transcript }]
-        : [],
-    };
-
-    const markdown = convertTranscriptToMarkdown(apiResponse, webhookData);
-
-    const startTime = details?.metaData?.started
-      ? new Date(details.metaData.started)
-      : new Date();
-
-    const filename =
-      startTime
-        .toISOString()
-        .replace(/:/g, '-')
-        .replace(/\.\d{3}Z$/, '') +
-      (details?.metaData?.title
-        ? `-${slugify(details.metaData.title, { lower: true })}`
-        : '') +
-      '.md';
-
-    gongCallFiles.push({ filename, markdown });
-  }
-
-  return gongCallFiles;
 }
 
 // Helper functions

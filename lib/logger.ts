@@ -1,10 +1,11 @@
 /**
- * Simple structured logger for the Sales Call Summary Agent
+ * Simple structured logger for server-side console output.
+ * Logs are visible in Vercel's dashboard and local terminal.
+ *
+ * For UI streaming, use workflow getWritable() in step functions.
  */
 
-import { logStream } from './log-stream';
-
-export type LogLevel = 'debug' | 'info' | 'warn' | 'error';
+type LogLevel = 'debug' | 'info' | 'warn' | 'error';
 
 const IS_DEV = process.env.NODE_ENV === 'development';
 const LOG_LEVEL = (process.env.LOG_LEVEL as LogLevel) || (IS_DEV ? 'debug' : 'info');
@@ -20,7 +21,7 @@ function shouldLog(level: LogLevel): boolean {
   return LOG_LEVELS[level] >= LOG_LEVELS[LOG_LEVEL];
 }
 
-export class Logger {
+class Logger {
   constructor(
     private context: string,
     private requestId?: string
@@ -37,32 +38,19 @@ export class Logger {
     return parts.join(' ');
   }
 
-  private emit(level: LogLevel, message: string, data?: unknown) {
-    logStream.emit({
-      time: new Date().toISOString(),
-      context: this.context,
-      level,
-      message,
-      data: data as Record<string, unknown> | undefined,
-    });
-  }
-
   debug(message: string, data?: unknown) {
     if (!shouldLog('debug')) return;
     console.log(this.formatMessage('debug', message), data ?? '');
-    this.emit('debug', message, data);
   }
 
   info(message: string, data?: unknown) {
     if (!shouldLog('info')) return;
     console.log(this.formatMessage('info', message), data ?? '');
-    this.emit('info', message, data);
   }
 
   warn(message: string, data?: unknown) {
     if (!shouldLog('warn')) return;
     console.warn(this.formatMessage('warn', message), data ?? '');
-    this.emit('warn', message, data);
   }
 
   error(message: string, error?: Error | unknown) {
@@ -74,21 +62,9 @@ export class Logger {
     if (error instanceof Error && error.stack) {
       console.error(error.stack);
     }
-    this.emit('error', message, error instanceof Error ? { error: error.message } : error);
-  }
-
-  /**
-   * Create a child logger with the same request ID
-   */
-  child(context: string): Logger {
-    return new Logger(context, this.requestId);
   }
 }
 
-/**
- * Create a logger for a specific context
- */
 export function createLogger(context: string, requestId?: string): Logger {
   return new Logger(context, requestId);
 }
-
