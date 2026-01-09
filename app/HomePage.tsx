@@ -71,10 +71,10 @@ export default function HomePage({ isDemo: isDemoMode }: { isDemo: boolean }) {
             try {
               const log = JSON.parse(data) as LogEntry;
               setLogs((prev) => [...prev, log]);
-
               if (
-                log.context === "workflow" &&
-                log.message === "Workflow complete"
+                (log.context === "workflow" &&
+                  log.message === "Workflow complete") ||
+                log.context === "result"
               ) {
                 setIsRunning(false);
               }
@@ -330,7 +330,9 @@ export default function HomePage({ isDemo: isDemoMode }: { isDemo: boolean }) {
                   >
                     {levelIcon(log.level) && (
                       <span
-                        className={`${levelColorClass(log.level)} font-medium w-3 shrink-0`}
+                        className={`${levelColorClass(
+                          log.level
+                        )} font-medium w-3 shrink-0`}
                       >
                         {levelIcon(log.level)}
                       </span>
@@ -339,12 +341,16 @@ export default function HomePage({ isDemo: isDemoMode }: { isDemo: boolean }) {
                       {formatTime(log.time)}
                     </span>
                     <span
-                      className={`${contextColorClasses(log.context)} py-0.5 px-2 rounded text-xs font-medium shrink-0`}
+                      className={`${contextColorClasses(
+                        log.context
+                      )} py-0.5 px-2 rounded text-xs font-medium shrink-0`}
                     >
                       {log.context}
                     </span>
                     <span
-                      className={`${messageColorClass(log.level)} whitespace-pre-wrap break-words`}
+                      className={`${messageColorClass(
+                        log.level
+                      )} whitespace-pre-wrap break-words min-w-0 overflow-hidden`}
                     >
                       {log.message}
                     </span>
