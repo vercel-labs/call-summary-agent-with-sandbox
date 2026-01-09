@@ -160,16 +160,6 @@ These files are loaded into the sandbox for the agent to explore.
 
 ## Configuration
 
-### AI Model
-
-By default, the agent uses `claude-sonnet-4-20250514`. You can change this via:
-
-```bash
-AI_MODEL=anthropic/claude-sonnet-4
-# or
-AI_MODEL=openai/gpt-4o
-```
-
 ### Custom System Prompt
 
 Override the default system prompt:
@@ -321,7 +311,7 @@ Health check endpoint.
 ```
 
 ## Output
-The function returns output in the format agentOutputSchema (detailed in agent.ts).
+The function returns a string output which can be configured into an outputSchema of your choice.
 
 ## Contributing
 
