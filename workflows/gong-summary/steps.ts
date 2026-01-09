@@ -32,6 +32,7 @@ export async function stepGetGongTranscript(webhookData: GongWebhook): Promise<s
 
   try {
     const callId = webhookData.callData.metaData.id;
+    await writeLog(writer, 'info', 'workflow', 'Workflow started');
     await writeLog(writer, 'info', 'transcript', 'Fetching transcript', { callId });
 
     let apiResponse;
@@ -82,6 +83,7 @@ export async function stepEmitResult(summary: string): Promise<void> {
   try {
     await writeLog(writer, 'info', 'result', '--- Generated Summary ---');
     await writeLog(writer, 'info', 'result', summary);
+    await writeLog(writer, 'info', 'workflow', 'Workflow complete');
   } finally {
     writer.releaseLock();
   }
