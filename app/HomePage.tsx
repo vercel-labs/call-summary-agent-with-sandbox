@@ -97,24 +97,24 @@ export default function HomePage({ isDemo: isDemoMode }: { isDemo: boolean }) {
   const formatTime = (iso: string) =>
     new Date(iso).toLocaleTimeString("en-US", { hour12: false });
 
-  const contextColor = (context: string) => {
+  const contextColorClasses = (context: string) => {
     switch (context) {
       case "workflow":
-        return { bg: "#2e1065", text: "#c4b5fd" };
+        return "bg-[#2e1065] text-[#c4b5fd]";
       case "agent":
-        return { bg: "#022c22", text: "#6ee7b7" };
+        return "bg-[#022c22] text-[#6ee7b7]";
       case "bash":
-        return { bg: "#1c1917", text: "#a8a29e" };
+        return "bg-[#1c1917] text-[#a8a29e]";
       case "bash-output":
-        return { bg: "#1c1917", text: "#78716c" };
+        return "bg-[#1c1917] text-[#78716c]";
       case "sandbox":
-        return { bg: "#172554", text: "#93c5fd" };
+        return "bg-[#172554] text-[#93c5fd]";
       case "transcript":
-        return { bg: "#3f3f46", text: "#a1a1aa" };
+        return "bg-[#3f3f46] text-[#a1a1aa]";
       case "result":
-        return { bg: "#365314", text: "#bef264" };
+        return "bg-[#365314] text-[#bef264]";
       default:
-        return { bg: "#27272a", text: "#a1a1aa" };
+        return "bg-[#27272a] text-[#a1a1aa]";
     }
   };
 
@@ -129,40 +129,32 @@ export default function HomePage({ isDemo: isDemoMode }: { isDemo: boolean }) {
     }
   };
 
-  const levelColor = (level: string) => {
+  const levelColorClass = (level: string) => {
     switch (level) {
       case "error":
-        return "#f87171";
+        return "text-red-400";
       case "warn":
-        return "#fbbf24";
+        return "text-amber-400";
       default:
-        return "#525252";
+        return "text-neutral-600";
+    }
+  };
+
+  const messageColorClass = (level: string) => {
+    switch (level) {
+      case "error":
+        return "text-red-400";
+      case "warn":
+        return "text-amber-400";
+      default:
+        return "text-neutral-300";
     }
   };
 
   return (
-    <main
-      style={{
-        height: "100vh",
-        boxSizing: "border-box",
-        display: "flex",
-        flexDirection: "column",
-        padding: "32px 40px",
-        background: "linear-gradient(to bottom, #000 0%, #0a0a0a 100%)",
-        overflow: "hidden",
-      }}
-    >
+    <main className="h-screen box-border flex flex-col py-8 px-10 bg-gradient-to-b from-black to-[#0a0a0a] overflow-hidden">
       {/* Header */}
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          gap: "12px",
-          marginBottom: "24px",
-          flexShrink: 0,
-        }}
-      >
+      <div className="flex items-center justify-center gap-3 mb-6 shrink-0">
         <svg
           width="24"
           height="24"
@@ -172,96 +164,31 @@ export default function HomePage({ isDemo: isDemoMode }: { isDemo: boolean }) {
         >
           <path d="M37.5274 0L75.0548 65H0L37.5274 0Z" fill="#fff" />
         </svg>
-        <h1
-          style={{
-            fontSize: "1.5rem",
-            fontWeight: 500,
-            margin: 0,
-            letterSpacing: "-0.02em",
-            color: "#fafafa",
-          }}
-        >
+        <h1 className="text-2xl font-medium m-0 tracking-tight text-[#fafafa]">
           Sales Call Summary Agent
         </h1>
-        <span
-          style={{
-            backgroundColor: "#2e1065",
-            color: "#c4b5fd",
-            padding: "4px 10px",
-            borderRadius: "9999px",
-            fontSize: "0.7rem",
-            fontWeight: 500,
-            letterSpacing: "0.02em",
-            textTransform: "uppercase",
-          }}
-        >
+        <span className="bg-[#2e1065] text-[#c4b5fd] py-1 px-2.5 rounded-full text-[0.7rem] font-medium tracking-wide uppercase">
           Demo
         </span>
       </div>
 
       {/* Main Content */}
-      <div
-        style={{
-          maxWidth: "900px",
-          width: "100%",
-          margin: "0 auto",
-          flex: 1,
-          display: "flex",
-          flexDirection: "column",
-          minHeight: 0,
-        }}
-      >
+      <div className="max-w-[900px] w-full mx-auto flex-1 flex flex-col min-h-0">
         {/* Info Cards Row */}
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(3, 1fr)",
-            gap: "12px",
-            marginBottom: "16px",
-            flexShrink: 0,
-          }}
-        >
+        <div className="grid grid-cols-3 gap-3 mb-4 shrink-0">
           {/* Overview */}
-          <div
-            style={{
-              backgroundColor: "#111",
-              borderRadius: "10px",
-              border: "1px solid #1f1f1f",
-              padding: "14px 16px",
-            }}
-          >
-            <p
-              style={{
-                fontSize: "0.65rem",
-                color: "#555",
-                margin: 0,
-                marginBottom: "6px",
-                textTransform: "uppercase",
-                letterSpacing: "0.08em",
-                fontWeight: 600,
-              }}
-            >
+          <div className="bg-[#111] rounded-[10px] border border-[#1f1f1f] py-3.5 px-4">
+            <p className="text-[0.65rem] text-[#555] m-0 mb-1.5 uppercase tracking-[0.08em] font-semibold">
               Overview
             </p>
-            <p
-              style={{
-                fontSize: "0.8rem",
-                color: "#888",
-                margin: 0,
-                lineHeight: 1.5,
-              }}
-            >
+            <p className="text-[0.8rem] text-[#888] m-0 leading-relaxed">
               An AI agent that analyzes sales call transcripts and generates
               actionable insights. Built with{" "}
               <a
                 href="https://sdk.vercel.ai"
                 target="_blank"
                 rel="noopener noreferrer"
-                style={{
-                  color: "#888",
-                  textDecoration: "underline",
-                  textUnderlineOffset: "2px",
-                }}
+                className="text-[#888] underline underline-offset-2"
               >
                 AI SDK
               </a>{" "}
@@ -270,11 +197,7 @@ export default function HomePage({ isDemo: isDemoMode }: { isDemo: boolean }) {
                 href="https://vercel.com/docs/workflow"
                 target="_blank"
                 rel="noopener noreferrer"
-                style={{
-                  color: "#888",
-                  textDecoration: "underline",
-                  textUnderlineOffset: "2px",
-                }}
+                className="text-[#888] underline underline-offset-2"
               >
                 Workflow
               </a>
@@ -283,45 +206,17 @@ export default function HomePage({ isDemo: isDemoMode }: { isDemo: boolean }) {
           </div>
 
           {/* How it works */}
-          <div
-            style={{
-              backgroundColor: "#111",
-              borderRadius: "10px",
-              border: "1px solid #1f1f1f",
-              padding: "14px 16px",
-            }}
-          >
-            <p
-              style={{
-                fontSize: "0.65rem",
-                color: "#555",
-                margin: 0,
-                marginBottom: "6px",
-                textTransform: "uppercase",
-                letterSpacing: "0.08em",
-                fontWeight: 600,
-              }}
-            >
+          <div className="bg-[#111] rounded-[10px] border border-[#1f1f1f] py-3.5 px-4">
+            <p className="text-[0.65rem] text-[#555] m-0 mb-1.5 uppercase tracking-[0.08em] font-semibold">
               How it works
             </p>
-            <p
-              style={{
-                fontSize: "0.8rem",
-                color: "#888",
-                margin: 0,
-                lineHeight: 1.5,
-              }}
-            >
+            <p className="text-[0.8rem] text-[#888] m-0 leading-relaxed">
               Spins up an isolated{" "}
               <a
                 href="https://vercel.com/docs/vercel-sandbox"
                 target="_blank"
                 rel="noopener noreferrer"
-                style={{
-                  color: "#888",
-                  textDecoration: "underline",
-                  textUnderlineOffset: "2px",
-                }}
+                className="text-[#888] underline underline-offset-2"
               >
                 sandbox
               </a>{" "}
@@ -331,35 +226,11 @@ export default function HomePage({ isDemo: isDemoMode }: { isDemo: boolean }) {
           </div>
 
           {/* Agent Objective */}
-          <div
-            style={{
-              backgroundColor: "#111",
-              borderRadius: "10px",
-              border: "1px solid #1f1f1f",
-              padding: "14px 16px",
-            }}
-          >
-            <p
-              style={{
-                fontSize: "0.65rem",
-                color: "#555",
-                margin: 0,
-                marginBottom: "6px",
-                textTransform: "uppercase",
-                letterSpacing: "0.08em",
-                fontWeight: 600,
-              }}
-            >
+          <div className="bg-[#111] rounded-[10px] border border-[#1f1f1f] py-3.5 px-4">
+            <p className="text-[0.65rem] text-[#555] m-0 mb-1.5 uppercase tracking-[0.08em] font-semibold">
               Agent Objective
             </p>
-            <p
-              style={{
-                fontSize: "0.8rem",
-                color: "#888",
-                margin: 0,
-                lineHeight: 1.5,
-              }}
-            >
+            <p className="text-[0.8rem] text-[#888] m-0 leading-relaxed">
               Extract a structured summary, follow-up tasks with owners, and
               customer objections with handling scores.
             </p>
@@ -367,127 +238,40 @@ export default function HomePage({ isDemo: isDemoMode }: { isDemo: boolean }) {
         </div>
 
         {/* Terminal */}
-        <div
-          style={{
-            backgroundColor: "#0a0a0a",
-            borderRadius: "12px",
-            border: "1px solid #1f1f1f",
-            overflow: "hidden",
-            display: "flex",
-            flexDirection: "column",
-            flex: 1,
-            minHeight: "200px",
-            maxHeight: "800px",
-          }}
-        >
+        <div className="bg-[#0a0a0a] rounded-xl border border-[#1f1f1f] overflow-hidden flex flex-col flex-1 min-h-[200px] max-h-[800px]">
           {/* Terminal Header */}
-          <div
-            style={{
-              padding: "12px 16px",
-              borderBottom: "1px solid #1f1f1f",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              gap: "8px",
-              flexShrink: 0,
-            }}
-          >
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "8px",
-              }}
-            >
-              <div style={{ display: "flex", gap: "6px" }}>
-                <div
-                  style={{
-                    width: "12px",
-                    height: "12px",
-                    borderRadius: "50%",
-                    backgroundColor: "#333",
-                  }}
-                />
-                <div
-                  style={{
-                    width: "12px",
-                    height: "12px",
-                    borderRadius: "50%",
-                    backgroundColor: "#333",
-                  }}
-                />
-                <div
-                  style={{
-                    width: "12px",
-                    height: "12px",
-                    borderRadius: "50%",
-                    backgroundColor: "#333",
-                  }}
-                />
+          <div className="py-3 px-4 border-b border-[#1f1f1f] flex items-center justify-between gap-2 shrink-0">
+            <div className="flex items-center gap-2">
+              <div className="flex gap-1.5">
+                <div className="w-3 h-3 rounded-full bg-[#333]" />
+                <div className="w-3 h-3 rounded-full bg-[#333]" />
+                <div className="w-3 h-3 rounded-full bg-[#333]" />
               </div>
-              <span
-                style={{ fontSize: "0.8rem", color: "#666", marginLeft: "8px" }}
-              >
-                Agent Logs
-              </span>
+              <span className="text-[0.8rem] text-[#666] ml-2">Agent Logs</span>
             </div>
-            <div style={{ flexShrink: 0 }}>
+            <div className="shrink-0">
               {isDemoMode === false ? (
-                <div style={{ display: "flex", gap: "8px" }}>
+                <div className="flex gap-2">
                   <input
                     type="text"
                     placeholder="Enter Gong Call ID"
                     value={callId}
                     onChange={(e) => setCallId(e.target.value)}
                     disabled={isRunning}
-                    style={{
-                      padding: "10px 14px",
-                      fontSize: "0.875rem",
-                      borderRadius: "8px",
-                      border: "1px solid #333",
-                      backgroundColor: "#0a0a0a",
-                      color: "#ededed",
-                      width: "220px",
-                      outline: "none",
-                      transition: "border-color 0.15s ease",
-                    }}
-                    onFocus={(e) => (e.target.style.borderColor = "#666")}
-                    onBlur={(e) => (e.target.style.borderColor = "#333")}
+                    className="py-2.5 px-3.5 text-sm rounded-lg border border-[#333] bg-[#0a0a0a] text-[#ededed] w-[220px] outline-none transition-colors duration-150 focus:border-[#666]"
                   />
                   <button
                     onClick={runWorkflow}
                     disabled={isRunning || !callId.trim()}
-                    style={{
-                      backgroundColor:
-                        isRunning || !callId.trim() ? "#333" : "#fff",
-                      color: isRunning || !callId.trim() ? "#666" : "#000",
-                      border: "none",
-                      borderRadius: "8px",
-                      padding: "6px 12px",
-                      fontSize: "0.875rem",
-                      fontWeight: 500,
-                      cursor:
-                        isRunning || !callId.trim() ? "not-allowed" : "pointer",
-                      transition: "all 0.15s ease",
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "8px",
-                    }}
+                    className={`border-none rounded-lg py-1.5 px-3 text-sm font-medium transition-all duration-150 flex items-center gap-2 ${
+                      isRunning || !callId.trim()
+                        ? "bg-[#333] text-[#666] cursor-not-allowed"
+                        : "bg-white text-black cursor-pointer"
+                    }`}
                   >
                     {isRunning && (
-                      <span
-                        style={{
-                          display: "inline-block",
-                          width: "12px",
-                          height: "12px",
-                          border: "2px solid #666",
-                          borderTopColor: "transparent",
-                          borderRadius: "50%",
-                          animation: "spin 0.8s linear infinite",
-                        }}
-                      />
+                      <span className="inline-block w-3 h-3 border-2 border-[#666] border-t-transparent rounded-full animate-spin" />
                     )}
-
                     <svg
                       width="12"
                       height="12"
@@ -503,35 +287,15 @@ export default function HomePage({ isDemo: isDemoMode }: { isDemo: boolean }) {
                 <button
                   onClick={runWorkflow}
                   disabled={isRunning || isDemoMode === null}
-                  style={{
-                    backgroundColor: isRunning ? "#333" : "#fff",
-                    color: isRunning ? "#666" : "#000",
-                    border: "none",
-                    borderRadius: "8px",
-                    padding: "10px 20px",
-                    fontSize: "0.875rem",
-                    fontWeight: 500,
-                    cursor: isRunning ? "not-allowed" : "pointer",
-                    transition: "all 0.15s ease",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "8px",
-                  }}
+                  className={`border-none rounded-lg py-2.5 px-5 text-sm font-medium transition-all duration-150 flex items-center gap-2 ${
+                    isRunning
+                      ? "bg-[#333] text-[#666] cursor-not-allowed"
+                      : "bg-white text-black cursor-pointer"
+                  }`}
                 >
                   {isRunning && (
-                    <span
-                      style={{
-                        display: "inline-block",
-                        width: "12px",
-                        height: "12px",
-                        border: "2px solid #666",
-                        borderTopColor: "transparent",
-                        borderRadius: "50%",
-                        animation: "spin 0.8s linear infinite",
-                      }}
-                    />
+                    <span className="inline-block w-3 h-3 border-2 border-[#666] border-t-transparent rounded-full animate-spin" />
                   )}
-
                   <svg
                     width="12"
                     height="12"
@@ -549,89 +313,43 @@ export default function HomePage({ isDemo: isDemoMode }: { isDemo: boolean }) {
           {/* Terminal Content */}
           <div
             ref={logsContainerRef}
-            style={{
-              padding: "16px",
-              flex: 1,
-              overflowY: "auto",
-              fontFamily:
-                'var(--font-geist-mono), ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace',
-              fontSize: "0.85rem",
-              lineHeight: 1.7,
-            }}
+            className="p-4 flex-1 overflow-y-auto font-mono text-[0.85rem] leading-[1.7]"
           >
             {logs.length === 0 ? (
-              <div
-                style={{
-                  color: "#444",
-                  textAlign: "center",
-                  paddingTop: "130px",
-                  fontSize: "0.85rem",
-                }}
-              >
+              <div className="text-[#444] text-center pt-[130px] text-[0.85rem]">
                 {isDemoMode === false
                   ? 'Enter a Gong Call ID and click "Run" to start'
                   : 'Click "Run Demo" to start the agent'}
               </div>
             ) : (
               <>
-                {logs.map((log, i) => {
-                  const colors = contextColor(log.context);
-                  return (
-                    <div
-                      key={i}
-                      style={{
-                        marginBottom: "6px",
-                        display: "flex",
-                        alignItems: "flex-start",
-                        gap: "10px",
-                        animation: "fadeIn 0.2s ease",
-                      }}
+                {logs.map((log, i) => (
+                  <div
+                    key={i}
+                    className="mb-1.5 flex items-start gap-2.5 animate-fadeIn"
+                  >
+                    {levelIcon(log.level) && (
+                      <span
+                        className={`${levelColorClass(log.level)} font-medium w-3 shrink-0`}
+                      >
+                        {levelIcon(log.level)}
+                      </span>
+                    )}
+                    <span className="text-[#555] shrink-0">
+                      {formatTime(log.time)}
+                    </span>
+                    <span
+                      className={`${contextColorClasses(log.context)} py-0.5 px-2 rounded text-xs font-medium shrink-0`}
                     >
-                      {levelIcon(log.level) && (
-                        <span
-                          style={{
-                            color: levelColor(log.level),
-                            fontWeight: 500,
-                            width: "12px",
-                            flexShrink: 0,
-                          }}
-                        >
-                          {levelIcon(log.level)}
-                        </span>
-                      )}
-                      <span style={{ color: "#555", flexShrink: 0 }}>
-                        {formatTime(log.time)}
-                      </span>
-                      <span
-                        style={{
-                          backgroundColor: colors.bg,
-                          color: colors.text,
-                          padding: "2px 8px",
-                          borderRadius: "4px",
-                          fontSize: "0.75rem",
-                          fontWeight: 500,
-                          flexShrink: 0,
-                        }}
-                      >
-                        {log.context}
-                      </span>
-                      <span
-                        style={{
-                          color:
-                            log.level === "error"
-                              ? "#f87171"
-                              : log.level === "warn"
-                              ? "#fbbf24"
-                              : "#d4d4d4",
-                          whiteSpace: "pre-wrap",
-                          wordBreak: "break-word",
-                        }}
-                      >
-                        {log.message}
-                      </span>
-                    </div>
-                  );
-                })}
+                      {log.context}
+                    </span>
+                    <span
+                      className={`${messageColorClass(log.level)} whitespace-pre-wrap break-words`}
+                    >
+                      {log.message}
+                    </span>
+                  </div>
+                ))}
               </>
             )}
           </div>
@@ -639,42 +357,14 @@ export default function HomePage({ isDemo: isDemoMode }: { isDemo: boolean }) {
       </div>
 
       {/* Footer */}
-      <footer
-        style={{
-          flexShrink: 0,
-          paddingTop: "24px",
-          paddingBottom: "8px",
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          gap: "20px",
-        }}
-      >
+      <footer className="shrink-0 pt-6 pb-2 flex flex-col items-center gap-5">
         {/* Footer Links */}
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "0",
-          }}
-        >
+        <div className="flex items-center gap-0">
           <a
             href="https://github.com/vercel-labs/call-summary-agent-with-sandbox"
             target="_blank"
             rel="noopener noreferrer"
-            style={{
-              color: "#a1a1aa",
-              fontSize: "0.9rem",
-              fontWeight: 500,
-              textDecoration: "none",
-              display: "flex",
-              alignItems: "center",
-              gap: "10px",
-              padding: "8px 20px",
-              transition: "color 0.15s ease",
-            }}
-            onMouseEnter={(e) => (e.currentTarget.style.color = "#fafafa")}
-            onMouseLeave={(e) => (e.currentTarget.style.color = "#a1a1aa")}
+            className="text-[#a1a1aa] text-[0.9rem] font-medium no-underline flex items-center gap-2.5 py-2 px-5 transition-colors duration-150 hover:text-[#fafafa]"
           >
             <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
               <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z" />
@@ -682,25 +372,13 @@ export default function HomePage({ isDemo: isDemoMode }: { isDemo: boolean }) {
             GitHub Repository
           </a>
 
-          <span style={{ color: "#333", fontSize: "1.2rem" }}>|</span>
+          <span className="text-[#333] text-xl">|</span>
 
           <a
             href="https://github.com/vercel-labs/call-summary-agent-with-sandbox/tree/main?tab=readme-ov-file#sales-call-summary-agent"
             target="_blank"
             rel="noopener noreferrer"
-            style={{
-              color: "#a1a1aa",
-              fontSize: "0.9rem",
-              fontWeight: 500,
-              textDecoration: "none",
-              display: "flex",
-              alignItems: "center",
-              gap: "10px",
-              padding: "8px 20px",
-              transition: "color 0.15s ease",
-            }}
-            onMouseEnter={(e) => (e.currentTarget.style.color = "#fafafa")}
-            onMouseLeave={(e) => (e.currentTarget.style.color = "#a1a1aa")}
+            className="text-[#a1a1aa] text-[0.9rem] font-medium no-underline flex items-center gap-2.5 py-2 px-5 transition-colors duration-150 hover:text-[#fafafa]"
           >
             <svg
               width="18"
@@ -721,25 +399,13 @@ export default function HomePage({ isDemo: isDemoMode }: { isDemo: boolean }) {
             Documentation
           </a>
 
-          <span style={{ color: "#333", fontSize: "1.2rem" }}>|</span>
+          <span className="text-[#333] text-xl">|</span>
 
           <a
             href="https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fvercel-labs%2Fcall-summary-agent-with-sandbox"
             target="_blank"
             rel="noopener noreferrer"
-            style={{
-              color: "#a1a1aa",
-              fontSize: "0.9rem",
-              fontWeight: 500,
-              textDecoration: "none",
-              display: "flex",
-              alignItems: "center",
-              gap: "10px",
-              padding: "8px 20px",
-              transition: "color 0.15s ease",
-            }}
-            onMouseEnter={(e) => (e.currentTarget.style.color = "#fafafa")}
-            onMouseLeave={(e) => (e.currentTarget.style.color = "#a1a1aa")}
+            className="text-[#a1a1aa] text-[0.9rem] font-medium no-underline flex items-center gap-2.5 py-2 px-5 transition-colors duration-150 hover:text-[#fafafa]"
           >
             <svg width="16" height="16" viewBox="0 0 76 65" fill="currentColor">
               <path d="M37.5274 0L75.0548 65H0L37.5274 0Z" />
@@ -749,47 +415,10 @@ export default function HomePage({ isDemo: isDemoMode }: { isDemo: boolean }) {
         </div>
 
         {/* Copyright */}
-        <p
-          style={{
-            color: "#52525b",
-            fontSize: "0.85rem",
-            margin: 0,
-          }}
-        >
+        <p className="text-[#52525b] text-[0.85rem] m-0">
           © {new Date().getFullYear()} Vercel, Inc. All rights reserved.
         </p>
       </footer>
-
-      {/* Animations */}
-      <style jsx global>{`
-        @keyframes spin {
-          from {
-            transform: rotate(0deg);
-          }
-          to {
-            transform: rotate(360deg);
-          }
-        }
-        @keyframes pulse {
-          0%,
-          100% {
-            opacity: 1;
-          }
-          50% {
-            opacity: 0.4;
-          }
-        }
-        @keyframes fadeIn {
-          from {
-            opacity: 0;
-            transform: translateY(-2px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-      `}</style>
     </main>
   );
 }
