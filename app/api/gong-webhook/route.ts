@@ -5,52 +5,52 @@
  * Supports both regular responses and SSE streaming for real-time logs.
  */
 
-import { start } from 'workflow/api';
-import type { GongWebhook } from '@/lib/types';
-import { workflowGongSummary } from '@/workflows/gong-summary';
-import { createLogger } from '@/lib/logger';
-import { isDemoMode } from '@/lib/config';
-import { getMockWebhookData } from '@/lib/mock-data';
-import type { StreamLogEntry } from '@/lib/agent';
+import { start } from "workflow/api";
+import type { GongWebhook } from "@/lib/types";
+import { workflowGongSummary } from "@/workflows/gong-summary";
+import { createLogger } from "@/lib/logger";
+import { isDemoMode } from "@/lib/config";
+import { getMockWebhookData } from "@/lib/mock-data";
+import type { StreamLogEntry } from "@/lib/agent";
 
-const logger = createLogger('gong-webhook');
+const logger = createLogger("gong-webhook");
 
 /** Prepare webhook data - uses mock data in demo mode */
 async function getWebhookData(request: Request | null): Promise<GongWebhook> {
   if (isDemoMode()) {
-    logger.info('Demo mode: using mock webhook data');
+    logger.info("Demo mode: using mock webhook data");
     return { ...getMockWebhookData(), isTest: true, isPrivate: false };
   }
   return (await request!.json()) as GongWebhook;
 }
 
 export async function POST(request: Request) {
-  logger.info('POST /api/gong-webhook called', {
+  logger.info("POST /api/gong-webhook called", {
     url: request.url,
     method: request.method,
   });
 
-  const acceptHeader = request.headers.get('Accept') || '';
-  const wantsStream = acceptHeader.includes('text/event-stream');
+  const acceptHeader = request.headers.get("Accept") || "";
+  const wantsStream = acceptHeader.includes("text/event-stream");
 
-  logger.info('Request details', {
+  logger.info("Request details", {
     acceptHeader,
     wantsStream,
     demoMode: isDemoMode(),
   });
 
   if (wantsStream) {
-    const userAgent = request.headers.get('User-Agent') || '';
-    const isCurl = userAgent.toLowerCase().includes('curl');
-    logger.info('Streaming mode', { userAgent, isCurl });
+    const userAgent = request.headers.get("User-Agent") || "";
+    const isCurl = userAgent.toLowerCase().includes("curl");
+    logger.info("Streaming mode", { userAgent, isCurl });
     return await streamWorkflow(isDemoMode() ? null : request, isCurl);
   }
 
   try {
-    logger.info('Non-streaming mode, getting webhook data...');
+    logger.info("Non-streaming mode, getting webhook data...");
     const data = await getWebhookData(request);
 
-    logger.info('Webhook received', {
+    logger.info("Webhook received", {
       callId: data.callData.metaData.id,
       callTitle: data.callData.metaData.title,
       callUrl: data.callData.metaData.url,
@@ -59,37 +59,46 @@ export async function POST(request: Request) {
       isTest: data.isTest,
     });
 
-    logger.info('About to call start(workflowGongSummary)...');
+    logger.info("About to call start(workflowGongSummary)...");
     const run = await start(workflowGongSummary, [data]);
-    logger.info('Workflow started', { callId: data.callData.metaData.id });
+    logger.info("Workflow started", { callId: data.callData.metaData.id });
 
     return Response.json({
-      message: 'Workflow triggered',
+      message: "Workflow triggered",
       callId: data.callData.metaData.id,
     });
   } catch (error) {
-    logger.error('Failed to process webhook', { error: String(error), stack: (error as Error)?.stack });
+    logger.error("Failed to process webhook", {
+      error: String(error),
+      stack: (error as Error)?.stack,
+    });
     return Response.json(
-      { error: 'Failed to process webhook', message: error instanceof Error ? error.message : 'Unknown error' },
+      {
+        error: "Failed to process webhook",
+        message: error instanceof Error ? error.message : "Unknown error",
+      },
       { status: 500 }
     );
   }
 }
 
-async function streamWorkflow(request: Request | null, isCurl: boolean): Promise<Response> {
+async function streamWorkflow(
+  request: Request | null,
+  isCurl: boolean
+): Promise<Response> {
   const encoder = new TextEncoder();
-  logger.info('streamWorkflow called', { hasRequest: !!request, isCurl });
+  logger.info("streamWorkflow called", { hasRequest: !!request, isCurl });
 
   try {
-    logger.info('Getting webhook data for stream...');
+    logger.info("Getting webhook data for stream...");
     const data = await getWebhookData(request);
-    logger.info('Got webhook data', { callId: data.callData.metaData.id });
+    logger.info("Got webhook data", { callId: data.callData.metaData.id });
 
     // Start workflow and get the readable stream
-    logger.info('Starting workflow for streaming...');
+    logger.info("Starting workflow for streaming...");
     const run = await start(workflowGongSummary, [data]);
-    logger.info('Workflow run created');
-    const logsReadable = run.getReadable<StreamLogEntry>({ namespace: 'logs' });
+    logger.info("Workflow run created");
+    const logsReadable = run.getReadable<StreamLogEntry>({ namespace: "logs" });
 
     // Transform the workflow stream to SSE format
     const sseStream = new ReadableStream({
@@ -106,8 +115,12 @@ async function streamWorkflow(request: Request | null, isCurl: boolean): Promise
               // Format output based on client type
               let output: string;
               if (isCurl && value) {
-                const time = new Date(value.time).toLocaleTimeString('en-US', { hour12: false });
-                const logData = value.data ? ` ${JSON.stringify(value.data)}` : '';
+                const time = new Date(value.time).toLocaleTimeString("en-US", {
+                  hour12: false,
+                });
+                const logData = value.data
+                  ? ` ${JSON.stringify(value.data)}`
+                  : "";
                 output = `[${time}] [${value.context}] ${value.message}${logData}`;
               } else {
                 output = JSON.stringify(value);
@@ -126,7 +139,13 @@ async function streamWorkflow(request: Request | null, isCurl: boolean): Promise
             run.returnValue, // Wait for workflow to complete
           ]);
         } catch (err) {
-          controller.enqueue(encoder.encode(`data: ${JSON.stringify({ error: err instanceof Error ? err.message : 'Stream error' })}\n\n`));
+          controller.enqueue(
+            encoder.encode(
+              `data: ${JSON.stringify({
+                error: err instanceof Error ? err.message : "Stream error",
+              })}\n\n`
+            )
+          );
         } finally {
           controller.enqueue(encoder.encode(`data: "[DONE]"\n\n`));
           controller.close();
@@ -136,25 +155,19 @@ async function streamWorkflow(request: Request | null, isCurl: boolean): Promise
 
     return new Response(sseStream, {
       headers: {
-        'Content-Type': 'text/event-stream',
-        'Cache-Control': 'no-cache',
-        Connection: 'keep-alive',
+        "Content-Type": "text/event-stream",
+        "Cache-Control": "no-cache",
+        Connection: "keep-alive",
       },
     });
   } catch (err) {
-    logger.error('Failed to start workflow stream', err);
+    logger.error("Failed to start workflow stream", err);
     return Response.json(
-      { error: 'Failed to start workflow', message: err instanceof Error ? err.message : 'Unknown error' },
+      {
+        error: "Failed to start workflow",
+        message: err instanceof Error ? err.message : "Unknown error",
+      },
       { status: 500 }
     );
   }
-}
-
-/** Health check endpoint */
-export async function GET() {
-  return Response.json({
-    status: 'ok',
-    service: 'sales-call-summary-agent',
-    mode: isDemoMode() ? 'demo' : 'live',
-  });
 }

@@ -54,9 +54,6 @@ pnpm dev
 ### 4. Test
 
 ```bash
-# Check status (should show demoMode: true)
-curl http://localhost:3000/api/gong-webhook
-
 # Trigger the agent with demo data
 curl -X POST http://localhost:3000/api/gong-webhook \
   -H "Content-Type: application/json" \
