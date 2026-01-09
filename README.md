@@ -292,21 +292,6 @@ Receives Gong webhook payloads and triggers the summary workflow.
 }
 ```
 
-### GET /api/gong-webhook
-
-Health check endpoint.
-
-**Response**:
-```json
-{
-  "status": "ok",
-  "service": "sales-call-summary-agent",
-  "demoMode": true,
-  "configValid": true,
-  "configErrors": []
-}
-```
-
 ## Output
 The function returns a string output which can be configured into an outputSchema of your choice.
 
