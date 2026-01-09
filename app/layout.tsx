@@ -13,12 +13,16 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={`${GeistSans.variable} ${GeistMono.variable}`}>
+    <html lang="en" className={`${GeistSans.variable} ${GeistMono.variable}`} style={{ height: '100vh', overflow: 'hidden' }}>
+      <head>
+        <style>{`*, *::before, *::after { box-sizing: border-box; }`}</style>
+      </head>
       <body
         style={{
           margin: 0,
           padding: 0,
-          minHeight: '100vh',
+          height: '100%',
+          overflow: 'hidden',
           backgroundColor: '#000',
           fontFamily: 'var(--font-geist-sans), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
           color: '#ededed',

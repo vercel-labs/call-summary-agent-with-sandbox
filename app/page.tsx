@@ -114,7 +114,7 @@ export default function HomePage() {
     switch (level) {
       case 'error': return '✕';
       case 'warn': return '!';
-      default: return '›';
+      default: return null;
     }
   };
 
@@ -128,11 +128,13 @@ export default function HomePage() {
 
   return (
     <main style={{
-      minHeight: '100vh',
+      height: '100vh',
+      boxSizing: 'border-box',
       display: 'flex',
       flexDirection: 'column',
       padding: '32px 40px',
       background: 'linear-gradient(to bottom, #000 0%, #0a0a0a 100%)',
+      overflow: 'hidden',
     }}>
       {/* Header */}
       <div style={{
@@ -141,6 +143,7 @@ export default function HomePage() {
         justifyContent: 'center',
         gap: '12px',
         marginBottom: '24px',
+        flexShrink: 0,
       }}>
         <svg width="24" height="24" viewBox="0 0 76 65" fill="none" xmlns="http://www.w3.org/2000/svg">
           <path d="M37.5274 0L75.0548 65H0L37.5274 0Z" fill="#fff"/>
@@ -173,6 +176,10 @@ export default function HomePage() {
         maxWidth: '900px',
         width: '100%',
         margin: '0 auto',
+        flex: 1,
+        display: 'flex',
+        flexDirection: 'column',
+        minHeight: 0,
       }}>
         {/* Info Cards Row */}
         <div style={{
@@ -180,6 +187,7 @@ export default function HomePage() {
           gridTemplateColumns: 'repeat(3, 1fr)',
           gap: '12px',
           marginBottom: '16px',
+          flexShrink: 0,
         }}>
           {/* Overview */}
           <div style={{
@@ -272,7 +280,7 @@ export default function HomePage() {
         </div>
 
         {/* Run Button */}
-        <div style={{ marginBottom: '12px' }}>
+        <div style={{ marginBottom: '12px', flexShrink: 0 }}>
           {isDemoMode === false ? (
             <div style={{ display: 'flex', gap: '8px' }}>
               <input
@@ -351,8 +359,9 @@ export default function HomePage() {
             overflow: 'hidden',
             display: 'flex',
             flexDirection: 'column',
-            height: '380px',
-            maxHeight: '380px',
+            flex: 1,
+            minHeight: '200px',
+            maxHeight: '800px',
           }}
         >
           {/* Terminal Header */}
@@ -429,14 +438,16 @@ export default function HomePage() {
                         animation: 'fadeIn 0.2s ease',
                       }}
                     >
-                      <span style={{
-                        color: levelColor(log.level),
-                        fontWeight: 500,
-                        width: '12px',
-                        flexShrink: 0,
-                      }}>
-                        {levelIcon(log.level)}
-                      </span>
+                      {levelIcon(log.level) && (
+                        <span style={{
+                          color: levelColor(log.level),
+                          fontWeight: 500,
+                          width: '12px',
+                          flexShrink: 0,
+                        }}>
+                          {levelIcon(log.level)}
+                        </span>
+                      )}
                       <span style={{ color: '#555', flexShrink: 0 }}>
                         {formatTime(log.time)}
                       </span>
@@ -470,9 +481,9 @@ export default function HomePage() {
 
       {/* Footer */}
       <footer style={{
-        marginTop: 'auto',
-        paddingTop: '48px',
-        paddingBottom: '32px',
+        flexShrink: 0,
+        paddingTop: '24px',
+        paddingBottom: '8px',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
