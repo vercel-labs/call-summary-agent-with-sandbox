@@ -7,7 +7,7 @@
  *
  * For production systems processing thousands of calls, consider using the DurableAgent
  * pattern from the Workflow SDK, which makes each LLM call and tool execution a durable
- * checkpoint. Learn more: https://useworkflow.dev/docs/ai
+ * checkpoint. Learn more: https://workflow-sdk.dev/docs/ai
  */
 
 import { ToolLoopAgent } from 'ai';

@@ -13,7 +13,7 @@ An AI-powered agent that automatically summarizes sales calls using Vercel's San
 - **[bash-tool](https://www.npmjs.com/package/bash-tool)** - Generic bash tool for AI agents, compatible with AI SDK
 - **Demo Mode** - Works out of the box with mock data (no Gong credentials needed)
 - **Objection Tracking** - Identifies and scores how well objections were handled
-- **Durable Workflows** - Built with Vercel Workflow DevKit for reliability
+- **Durable Workflows** - Built with Workflow SDK for reliability
 
 ---
 
